@@ -38,8 +38,12 @@ int AnaModule::process_event(PHCompositeNode* topNode)
   for(int i = 0; i < nTracklets; ++i)
   {
     Tracklet* tracklet = trackletVec->at(i);
-    if(tracklet->getNHits() < 10) continue;
-    if(tracklet->getChisq() > 20.) continue;
+    nHits = tracklet->getNHits();
+    chisq = tracklet->getChisq();
+
+    //very loose cuts here
+    if(nHits < 9) continue;
+    if(chisq > 20.) continue;
 
     for(auto it = detectorIDs.begin(); it != detectorIDs.end(); ++it)
     {
@@ -95,6 +99,8 @@ void AnaModule::MakeTree()
   saveTree->Branch("elementID_closest", &elementID_closest, "elementID_closest/I");
   saveTree->Branch("x_exp", &x_exp, "x_exp/D");
   saveTree->Branch("y_exp", &y_exp, "y_exp/D");
+  saveTree->Branch("nHits", &nHits, "nHits/I");
+  saveTree->Branch("chisq", &chisq, "chisq/D");
 }
 
 void AnaModule::registerDetector(TString name)

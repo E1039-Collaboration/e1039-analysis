@@ -33,7 +33,7 @@ int run(const int nEvents = 1)
 
   AnaModule* ana = new AnaModule();
   ana->set_output_filename("ana.root");
-  ana->registerDetector("DP1TL");
+  ana->registerDetector("DP1TL");     //register detector by its name, all detectors that do not directly partipate the tracking can be used
   ana->registerDetector("DP1TR");
   ana->registerDetector("DP1BL");
   ana->registerDetector("DP1BR");
@@ -41,6 +41,14 @@ int run(const int nEvents = 1)
   ana->registerDetector("DP2TR");
   ana->registerDetector("DP2BL");
   ana->registerDetector("DP2BR");
+  ana->registerDetector("P1X1");
+  ana->registerDetector("P1X2");
+  ana->registerDetector("P2X1");
+  ana->registerDetector("P2X2");
+  ana->registerDetector("P1Y1");
+  ana->registerDetector("P1Y2");
+  ana->registerDetector("P2Y1");
+  ana->registerDetector("P2Y2");
   se->registerSubsystem(ana);
 
   Fun4AllInputManager* in = new Fun4AllDstInputManager("DSTIN");
@@ -48,8 +56,9 @@ int run(const int nEvents = 1)
   in->fileopen("data.root");
   se->registerInputManager(in);
 
-  Fun4AllDstOutputManager* out = new Fun4AllDstOutputManager("DSTOUT", "result.root");
-  se->registerOutputManager(out);
+  //we do not really need an output manager
+  //Fun4AllDstOutputManager* out = new Fun4AllDstOutputManager("DSTOUT", "result.root");
+  //se->registerOutputManager(out);
 
   se->run(nEvents);
 

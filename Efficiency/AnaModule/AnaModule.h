@@ -56,6 +56,8 @@ private:
   int elementID_closest;
   double x_exp;
   double y_exp;
+  int nHits;
+  double chisq;
 };
 
 #endif
