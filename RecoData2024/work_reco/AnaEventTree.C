@@ -6,6 +6,7 @@ void AnaEventTree(const string dim_type="PM", const char* dir_data_base="data/re
   TChain* tree = new TChain("tree");
 
   ifstream ifs("list_run_spill.txt");
+  ofstream ofs("list_run_spill.txt.analyzed");
   int run_id, spill_id;
   while (ifs >> run_id >> spill_id) {
     ostringstream oss;
@@ -18,10 +19,12 @@ void AnaEventTree(const string dim_type="PM", const char* dir_data_base="data/re
         << "/out/output_" << dim_type << ".root";
     if (gSystem->AccessPathName(oss.str().c_str())) continue;
     tree->Add(oss.str().c_str());
+    ofs << run_id << "\t" << spill_id << "\n";
   }
   ifs.close();
+  ofs.close();
 
-  if (dim_type == "PM") AnaDimuonV2::AnalyzeTree(tree);
+  if (dim_type == "PM") AnaDimuon::AnalyzeTree(tree);
   else                  AnaDimuonLikeSign::AnalyzeTree(tree, dim_type);
   
   exit(0);

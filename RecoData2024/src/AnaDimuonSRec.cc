@@ -9,8 +9,6 @@
 #include <interface_main/SQRun.h>
 #include <interface_main/SQHitVector.h>
 #include <interface_main/SQEvent.h>
-#include <interface_main/SQTrackVector.h>
-#include <interface_main/SQDimuonVector.h>
 #include <ktracker/SRecEvent.h>
 #include <fun4all/Fun4AllReturnCodes.h>
 #include <phool/PHNodeIterator.h>
@@ -18,44 +16,42 @@
 #include <phool/getClass.h>
 #include <geom_svc/GeomSvc.h>
 //#include <UtilAna/UtilHist.h>
-#include "AnaDimuonV2.h"
+#include "AnaDimuonSRec.h"
 using namespace std;
 
-AnaDimuonV2::AnaDimuonV2(const std::string& name)
+AnaDimuonSRec::AnaDimuonSRec(const std::string& name)
   : SubsysReco  (name)
   , m_sq_evt    (0)
   , m_sq_hit_vec(0)
-  , m_sq_trk_vec(0)
-  , m_sq_dim_vec(0)
-  , m_file_name ("output_PM.root")
+  , m_srec      (0)
+  , m_file_name ("output.root")
   , m_file      (0)
   , m_tree      (0)
 {
   ;
 }
 
-AnaDimuonV2::~AnaDimuonV2()
+AnaDimuonSRec::~AnaDimuonSRec()
 {
   ;
 }
 
-int AnaDimuonV2::Init(PHCompositeNode* topNode)
+int AnaDimuonSRec::Init(PHCompositeNode* topNode)
 {
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
-int AnaDimuonV2::InitRun(PHCompositeNode* topNode)
+int AnaDimuonSRec::InitRun(PHCompositeNode* topNode)
 {
   //GeomSvc* geom = GeomSvc::instance();
 
-  m_sq_evt     = findNode::getClass<SQEvent       >(topNode, "SQEvent");
-  m_sq_hit_vec = findNode::getClass<SQHitVector   >(topNode, "SQHitVector");
-  m_sq_trk_vec = findNode::getClass<SQTrackVector >(topNode, "SQRecTrackVector");
-  m_sq_dim_vec = findNode::getClass<SQDimuonVector>(topNode, "SQRecDimuonVector_PM");
-  if (!m_sq_evt || !m_sq_hit_vec || !m_sq_trk_vec || !m_sq_dim_vec) return Fun4AllReturnCodes::ABORTEVENT;
+  m_sq_evt     = findNode::getClass<SQEvent    >(topNode, "SQEvent");
+  m_sq_hit_vec = findNode::getClass<SQHitVector>(topNode, "SQHitVector");
+  m_srec       = findNode::getClass<SRecEvent  >(topNode, "SRecEvent");
+  if (!m_sq_evt || !m_sq_hit_vec || !m_srec) return Fun4AllReturnCodes::ABORTEVENT;
 
   m_file = new TFile(m_file_name.c_str(), "RECREATE");
-  m_tree = new TTree("tree", "Created by AnaDimuonV2");
+  m_tree = new TTree("tree", "Created by AnaDimuonSRec");
   m_tree->Branch("event"      , &m_evt);
   m_tree->Branch("dimuon_list", &m_dim_list);
 
@@ -72,7 +68,7 @@ int AnaDimuonV2::InitRun(PHCompositeNode* topNode)
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
-int AnaDimuonV2::process_event(PHCompositeNode* topNode)
+int AnaDimuonSRec::process_event(PHCompositeNode* topNode)
 {
   //if (! m_sq_evt->get_trigger(SQEvent::MATRIX1)) {
   //  return Fun4AllReturnCodes::EVENT_OK;
@@ -112,15 +108,14 @@ int AnaDimuonV2::process_event(PHCompositeNode* topNode)
   //}
   
   m_dim_list.clear();
-  for (auto it = m_sq_dim_vec->begin(); it != m_sq_dim_vec->end(); it++) {
-    SRecDimuon* dim = dynamic_cast<SRecDimuon*>(*it);
-    int trk_id_pos = dim->get_track_id_pos();
-    int trk_id_neg = dim->get_track_id_neg();
-    SRecTrack* trk_pos = dynamic_cast<SRecTrack*>(m_sq_trk_vec->at(trk_id_pos));
-    SRecTrack* trk_neg = dynamic_cast<SRecTrack*>(m_sq_trk_vec->at(trk_id_neg));
+  int n_dim = m_srec->getNDimuons();
+  for (int i_dim = 0; i_dim < n_dim; i_dim++) {
+    SRecDimuon sdim = m_srec->getDimuon(i_dim);
+    SRecTrack trk_pos = m_srec->getTrack(sdim.get_track_id_pos());
+    SRecTrack trk_neg = m_srec->getTrack(sdim.get_track_id_neg());
 
-    int road_pos = trk_pos->getTriggerRoad();
-    int road_neg = trk_neg->getTriggerRoad();
+    int road_pos = trk_pos.getTriggerRoad();
+    int road_neg = trk_neg.getTriggerRoad();
     bool pos_top = m_rs.PosTop()->FindRoad(road_pos);
     bool pos_bot = m_rs.PosBot()->FindRoad(road_pos);
     bool neg_top = m_rs.NegTop()->FindRoad(road_neg);
@@ -134,31 +129,31 @@ int AnaDimuonV2::process_event(PHCompositeNode* topNode)
     dd.pos_bot            = pos_bot;
     dd.neg_top            = neg_top;
     dd.neg_bot            = neg_bot;
-    dd.pos                = dim->get_pos();
-    dd.mom                = dim->get_mom();
-    dd.n_hits_pos         = trk_pos->get_num_hits();
-    dd.chisq_pos          = trk_pos->get_chisq();
-    dd.chisq_target_pos   = trk_pos->getChisqTarget();//get_chisq_target();
-    dd.chisq_dump_pos     = trk_pos->get_chisq_dump();
-    dd.chisq_upstream_pos = trk_pos->get_chsiq_upstream();
-    dd.pos_pos            = trk_pos->get_pos_vtx();
-    dd.mom_pos            = trk_pos->get_mom_vtx();
-    dd.pos_target_pos     = trk_pos->get_pos_target();
-    dd.pos_dump_pos       = trk_pos->get_pos_dump();
-    dd.n_hits_neg         = trk_neg->get_num_hits();
-    dd.chisq_neg          = trk_neg->get_chisq();
-    dd.chisq_target_neg   = trk_neg->getChisqTarget();//get_chisq_target();
-    dd.chisq_dump_neg     = trk_neg->get_chisq_dump();
-    dd.chisq_upstream_neg = trk_neg->get_chsiq_upstream(); // not chisq
-    dd.pos_neg            = trk_neg->get_pos_vtx();
-    dd.mom_neg            = trk_neg->get_mom_vtx();
-    dd.pos_target_neg     = trk_neg->get_pos_target();
-    dd.pos_dump_neg       = trk_neg->get_pos_dump();
+    dd.pos                = sdim.get_pos();
+    dd.mom                = sdim.get_mom();
+    dd.n_hits_pos         = trk_pos.get_num_hits();
+    dd.chisq_pos          = trk_pos.get_chisq();
+    dd.chisq_target_pos   = trk_pos.getChisqTarget();//get_chisq_target();
+    dd.chisq_dump_pos     = trk_pos.get_chisq_dump();
+    dd.chisq_upstream_pos = trk_pos.get_chsiq_upstream();
+    dd.pos_pos            = trk_pos.get_pos_vtx();
+    dd.mom_pos            = trk_pos.get_mom_vtx();
+    dd.pos_target_pos     = trk_pos.get_pos_target();
+    dd.pos_dump_pos       = trk_pos.get_pos_dump();
+    dd.n_hits_neg         = trk_neg.get_num_hits();
+    dd.chisq_neg          = trk_neg.get_chisq();
+    dd.chisq_target_neg   = trk_neg.getChisqTarget();//get_chisq_target();
+    dd.chisq_dump_neg     = trk_neg.get_chisq_dump();
+    dd.chisq_upstream_neg = trk_neg.get_chsiq_upstream(); // not chisq
+    dd.pos_neg            = trk_neg.get_pos_vtx();
+    dd.mom_neg            = trk_neg.get_mom_vtx();
+    dd.pos_target_neg     = trk_neg.get_pos_target();
+    dd.pos_dump_neg       = trk_neg.get_pos_dump();
     
     //sdim.calcVariables(1); // 1 = target
-    dd.mom_target = dim->p_pos_target + dim->p_neg_target; // sdim.get_mom();
+    dd.mom_target = sdim.p_pos_target + sdim.p_neg_target; // sdim.get_mom();
     //sdim.calcVariables(2); // 2 = dump
-    dd.mom_dump = dim->p_pos_dump + dim->p_neg_dump; // sdim.get_mom();
+    dd.mom_dump = sdim.p_pos_dump + sdim.p_neg_dump; // sdim.get_mom();
     
     m_dim_list.push_back(dd);
   }
@@ -167,7 +162,7 @@ int AnaDimuonV2::process_event(PHCompositeNode* topNode)
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
-int AnaDimuonV2::End(PHCompositeNode* topNode)
+int AnaDimuonSRec::End(PHCompositeNode* topNode)
 {
   m_file->cd();
   m_file->Write();
@@ -175,15 +170,14 @@ int AnaDimuonV2::End(PHCompositeNode* topNode)
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
-void AnaDimuonV2::AnalyzeTree(TChain* tree)
+void AnaDimuonSRec::AnalyzeTree(TChain* tree)
 {
-  string dir_out = "result/PM"; //  + label;
   cout << "N of trees = " << tree->GetNtrees() << endl;
-  gSystem->mkdir(dir_out.c_str(), true);
-  ofstream ofs(dir_out + "/result.txt");
+  gSystem->mkdir("result", true);
+  ofstream ofs("result/result.txt");
 
-  TFile* file_out = new TFile((dir_out+"/result.root").c_str(), "RECREATE");
-  
+  TFile* file_out = new TFile("result/result.root", "RECREATE");
+
   TH1* h1_D1  = new TH1D("h1_D1" ,  ";D1 occupancy;N of events", 500, -0.5, 499.5);
   TH1* h1_D2  = new TH1D("h1_D2" ,  ";D2 occupancy;N of events", 300, -0.5, 299.5);
   TH1* h1_D3p = new TH1D("h1_D3p", ";D3p occupancy;N of events", 300, -0.5, 299.5);
@@ -359,81 +353,81 @@ void AnaDimuonV2::AnalyzeTree(TChain* tree)
   c1->SetGrid();
   //c1->SetLogy(true);
 
-  h1_D1 ->Draw();  c1->SaveAs((dir_out+"/h1_D1.png").c_str());
-  h1_D2 ->Draw();  c1->SaveAs((dir_out+"/h1_D2.png").c_str());
-  h1_D3p->Draw();  c1->SaveAs((dir_out+"/h1_D3p.png").c_str());
-  h1_D3m->Draw();  c1->SaveAs((dir_out+"/h1_D3m.png").c_str());
+  h1_D1 ->Draw();  c1->SaveAs("result/h1_D1.png");
+  h1_D2 ->Draw();  c1->SaveAs("result/h1_D2.png");
+  h1_D3p->Draw();  c1->SaveAs("result/h1_D3p.png");
+  h1_D3m->Draw();  c1->SaveAs("result/h1_D3m.png");
   
-  h1_nhit_pos->Draw();  c1->SaveAs((dir_out+"/h1_nhit_pos.png").c_str());
-  h1_chi2_pos->Draw();  c1->SaveAs((dir_out+"/h1_chi2_pos.png").c_str());
-  h1_z_pos   ->Draw();  c1->SaveAs((dir_out+"/h1_z_pos.png").c_str());
-  h1_pz_pos  ->Draw();  c1->SaveAs((dir_out+"/h1_pz_pos.png").c_str());
-  //h1_x_t_pos ->Draw();  c1->SaveAs(dir_out+"/h1_x_t_pos.png");  
-  //h1_y_t_pos ->Draw();  c1->SaveAs(dir_out+"/h1_y_t_pos.png");  
-  //h1_x_d_pos ->Draw();  c1->SaveAs(dir_out+"/h1_x_d_pos.png");  
-  //h1_y_d_pos ->Draw();  c1->SaveAs(dir_out+"/h1_y_d_pos.png");  
+  h1_nhit_pos->Draw();  c1->SaveAs("result/h1_nhit_pos.png");  
+  h1_chi2_pos->Draw();  c1->SaveAs("result/h1_chi2_pos.png");  
+  h1_z_pos   ->Draw();  c1->SaveAs("result/h1_z_pos.png");  
+  h1_pz_pos  ->Draw();  c1->SaveAs("result/h1_pz_pos.png");
+  //h1_x_t_pos ->Draw();  c1->SaveAs("result/h1_x_t_pos.png");  
+  //h1_y_t_pos ->Draw();  c1->SaveAs("result/h1_y_t_pos.png");  
+  //h1_x_d_pos ->Draw();  c1->SaveAs("result/h1_x_d_pos.png");  
+  //h1_y_d_pos ->Draw();  c1->SaveAs("result/h1_y_d_pos.png");  
 
-  h1_chi2_tgt_pos->Draw();  c1->SaveAs((dir_out+"/h1_chi2_tgt_pos.png").c_str());
-  h1_chi2_dum_pos->Draw();  c1->SaveAs((dir_out+"/h1_chi2_dum_pos.png").c_str());
-  h1_chi2_ups_pos->Draw();  c1->SaveAs((dir_out+"/h1_chi2_ups_pos.png").c_str());
-  h1_chi2_tmd_pos->Draw();  c1->SaveAs((dir_out+"/h1_chi2_tmd_pos.png").c_str());
-  h1_chi2_tmu_pos->Draw();  c1->SaveAs((dir_out+"/h1_chi2_tmu_pos.png").c_str());
+  h1_chi2_tgt_pos->Draw();  c1->SaveAs("result/h1_chi2_tgt_pos.png");
+  h1_chi2_dum_pos->Draw();  c1->SaveAs("result/h1_chi2_dum_pos.png");
+  h1_chi2_ups_pos->Draw();  c1->SaveAs("result/h1_chi2_ups_pos.png");
+  h1_chi2_tmd_pos->Draw();  c1->SaveAs("result/h1_chi2_tmd_pos.png");
+  h1_chi2_tmu_pos->Draw();  c1->SaveAs("result/h1_chi2_tmu_pos.png");
   
-  h1_nhit_neg->Draw();  c1->SaveAs((dir_out+"/h1_nhit_neg.png").c_str());
-  h1_chi2_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_neg.png").c_str());
-  h1_z_neg   ->Draw();  c1->SaveAs((dir_out+"/h1_z_neg.png").c_str());
-  h1_pz_neg  ->Draw();  c1->SaveAs((dir_out+"/h1_pz_neg.png").c_str());
-  //h1_x_t_neg ->Draw();  c1->SaveAs(dir_out+"/h1_x_t_neg.png");  
-  //h1_y_t_neg ->Draw();  c1->SaveAs(dir_out+"/h1_y_t_neg.png");  
-  //h1_x_d_neg ->Draw();  c1->SaveAs(dir_out+"/h1_x_d_neg.png");  
-  //h1_y_d_neg ->Draw();  c1->SaveAs(dir_out+"/h1_y_d_neg.png");  
+  h1_nhit_neg->Draw();  c1->SaveAs("result/h1_nhit_neg.png");  
+  h1_chi2_neg->Draw();  c1->SaveAs("result/h1_chi2_neg.png");  
+  h1_z_neg   ->Draw();  c1->SaveAs("result/h1_z_neg.png");  
+  h1_pz_neg  ->Draw();  c1->SaveAs("result/h1_pz_neg.png");  
+  //h1_x_t_neg ->Draw();  c1->SaveAs("result/h1_x_t_neg.png");  
+  //h1_y_t_neg ->Draw();  c1->SaveAs("result/h1_y_t_neg.png");  
+  //h1_x_d_neg ->Draw();  c1->SaveAs("result/h1_x_d_neg.png");  
+  //h1_y_d_neg ->Draw();  c1->SaveAs("result/h1_y_d_neg.png");  
 
-  h1_chi2_tgt_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_tgt_neg.png").c_str());
-  h1_chi2_dum_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_dum_neg.png").c_str());
-  h1_chi2_ups_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_ups_neg.png").c_str());
-  h1_chi2_tmd_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_tmd_neg.png").c_str());
-  h1_chi2_tmu_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_tmu_neg.png").c_str());
+  h1_chi2_tgt_neg->Draw();  c1->SaveAs("result/h1_chi2_tgt_neg.png");
+  h1_chi2_dum_neg->Draw();  c1->SaveAs("result/h1_chi2_dum_neg.png");
+  h1_chi2_ups_neg->Draw();  c1->SaveAs("result/h1_chi2_ups_neg.png");
+  h1_chi2_tmd_neg->Draw();  c1->SaveAs("result/h1_chi2_tmd_neg.png");
+  h1_chi2_tmu_neg->Draw();  c1->SaveAs("result/h1_chi2_tmu_neg.png");
 
-  h1_dx     ->Draw();  c1->SaveAs((dir_out+"/h1_dx.png"     ).c_str());
-  h1_dy     ->Draw();  c1->SaveAs((dir_out+"/h1_dy.png"     ).c_str());
-  h1_dz     ->Draw();  c1->SaveAs((dir_out+"/h1_dz.png"     ).c_str());
-  h1_dpx    ->Draw();  c1->SaveAs((dir_out+"/h1_dpx.png"    ).c_str());
-  h1_dpy    ->Draw();  c1->SaveAs((dir_out+"/h1_dpy.png"    ).c_str());
-  h1_dpz    ->Draw();  c1->SaveAs((dir_out+"/h1_dpz.png"    ).c_str());
-  h1_m      ->Draw();  c1->SaveAs((dir_out+"/h1_m.png"      ).c_str());
-  h1_trk_sep->Draw();  c1->SaveAs((dir_out+"/h1_trk_sep.png").c_str());
+  h1_dx     ->Draw();  c1->SaveAs("result/h1_dx.png");
+  h1_dy     ->Draw();  c1->SaveAs("result/h1_dy.png");
+  h1_dz     ->Draw();  c1->SaveAs("result/h1_dz.png");
+  h1_dpx    ->Draw();  c1->SaveAs("result/h1_dpx.png");
+  h1_dpy    ->Draw();  c1->SaveAs("result/h1_dpy.png");
+  h1_dpz    ->Draw();  c1->SaveAs("result/h1_dpz.png");
+  h1_m      ->Draw();  c1->SaveAs("result/h1_m.png");
+  h1_trk_sep->Draw();  c1->SaveAs("result/h1_trk_sep.png");
 
   //c1->SetLogy(true);
 
   h1_dz_sel->SetLineColor(kRed);
   h1_dz_sel->SetLineWidth(2);
   h1_dz_sel->Draw();
-  c1->SaveAs((dir_out+"/h1_dz_sel.png").c_str());
+  c1->SaveAs("result/h1_dz_sel.png");
 
   h1_dpz_sel->SetLineColor(kRed);
   h1_dpz_sel->SetLineWidth(2);
   h1_dpz_sel->Draw();
-  c1->SaveAs((dir_out+"/h1_dpz_sel.png").c_str());
+  c1->SaveAs("result/h1_dpz_sel.png");
 
   h1_m_sel ->SetLineColor(kRed);
   h1_m_sel ->SetLineWidth(2);
   h1_m_sel->Draw();
-  c1->SaveAs((dir_out+"/h1_m_sel.png").c_str());
+  c1->SaveAs("result/h1_m_sel.png");
 
   h1_dz_tgt->SetLineColor(kBlue);
   h1_dz_tgt->SetLineWidth(2);
   h1_dz_tgt->Draw();
-  c1->SaveAs((dir_out+"/h1_dz_tgt.png").c_str());
+  c1->SaveAs("result/h1_dz_tgt.png");
 
   h1_dpz_tgt->SetLineColor(kBlue);
   h1_dpz_tgt->SetLineWidth(2);
   h1_dpz_tgt->Draw();
-  c1->SaveAs((dir_out+"/h1_dpz_tgt.png").c_str());
+  c1->SaveAs("result/h1_dpz_tgt.png");
 
   h1_m_tgt ->SetLineColor(kBlue);
   h1_m_tgt ->SetLineWidth(2);
   h1_m_tgt->Draw();
-  c1->SaveAs((dir_out+"/h1_m_tgt.png").c_str());
+  c1->SaveAs("result/h1_m_tgt.png");
   
   delete c1;
 

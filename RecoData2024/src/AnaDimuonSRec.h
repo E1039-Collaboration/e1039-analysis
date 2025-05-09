@@ -1,5 +1,5 @@
-#ifndef _ANA_DIMUON_V2__H_
-#define _ANA_DIMUON_V2__H_
+#ifndef _ANA_DIMUON_SREC__H_
+#define _ANA_DIMUON_SREC__H_
 #include <fun4all/SubsysReco.h>
 #include <UtilAna/TrigRoadset.h>
 #include "TreeData.h"
@@ -8,15 +8,16 @@ class TTree;
 class TChain;
 class SQEvent;
 class SQHitVector;
-class SQTrackVector;
-class SQDimuonVector;
+class SRecEvent;
 
-/// An example class to analyze hodoscope hits in E1039 DST file.
-class AnaDimuonV2: public SubsysReco {
+/// An example class to analyze dimuons stored as `SRecEvent`.
+/**
+ * This class should be used instead of `AnaDimuon` if tracks/dimuons that you analyze are saved as `SRecEvent` instead of `SQTrackVector`/`SQDimuonVector`.
+ */
+class AnaDimuonSRec: public SubsysReco {
   SQEvent*     m_sq_evt;
   SQHitVector* m_sq_hit_vec;
-  SQTrackVector*  m_sq_trk_vec;
-  SQDimuonVector* m_sq_dim_vec;
+  SRecEvent*   m_srec;
 
   std::string m_file_name;
   TFile*      m_file;
@@ -27,8 +28,8 @@ class AnaDimuonV2: public SubsysReco {
   UtilTrigger::TrigRoadset m_rs;
   
  public:
-  AnaDimuonV2(const std::string& name="AnaDimuonV2");
-  virtual ~AnaDimuonV2();
+  AnaDimuonSRec(const std::string& name="AnaDimuonSRec");
+  virtual ~AnaDimuonSRec();
   int Init(PHCompositeNode *topNode);
   int InitRun(PHCompositeNode *topNode);
   int process_event(PHCompositeNode *topNode);
@@ -38,4 +39,4 @@ class AnaDimuonV2: public SubsysReco {
   static void AnalyzeTree(TChain* tree);
 };
 
-#endif // _ANA_DIMUON_V2__H_
+#endif // _ANA_DIMUON_SREC__H_

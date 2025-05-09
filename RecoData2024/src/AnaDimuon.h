@@ -8,13 +8,15 @@ class TTree;
 class TChain;
 class SQEvent;
 class SQHitVector;
-class SRecEvent;
+class SQTrackVector;
+class SQDimuonVector;
 
-/// An example class to analyze hodoscope hits in E1039 DST file.
+/// An example class to analyze dimuons.
 class AnaDimuon: public SubsysReco {
   SQEvent*     m_sq_evt;
   SQHitVector* m_sq_hit_vec;
-  SRecEvent*   m_srec;
+  SQTrackVector*  m_sq_trk_vec;
+  SQDimuonVector* m_sq_dim_vec;
 
   std::string m_file_name;
   TFile*      m_file;

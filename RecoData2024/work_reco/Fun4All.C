@@ -35,14 +35,14 @@ int Fun4All(const int run_id, const int spill_id, const string DST_in, const str
   cal_ele_pos->CalibTriggerHit(false);
   se->registerSubsystem(cal_ele_pos);
   
-  CalibHodoInTime* cal_hodo = new CalibHodoInTime();
-  cal_hodo->SkipCalibration();
-  cal_hodo->DeleteOutTimeHit();
-  se->registerSubsystem(cal_hodo);
+  //CalibHodoInTime* cal_hodo = new CalibHodoInTime();
+  //cal_hodo->SkipCalibration();
+  //cal_hodo->DeleteOutTimeHit();
+  //se->registerSubsystem(cal_hodo);
   
   CalibDriftDist* cal_dd = new CalibDriftDist();
   //cal_dd->Verbosity(999);
-  cal_dd->DeleteOutTimeHit();
+  //cal_dd->DeleteOutTimeHit();
   se->registerSubsystem(cal_dd);
 
   SQReco* reco = new SQReco();
@@ -52,16 +52,12 @@ int Fun4All(const int run_id, const int spill_id, const string DST_in, const str
   reco->set_enable_KF(true);
   reco->setInputTy(SQReco::E1039);
   reco->setFitterTy(SQReco::KFREF);
-  reco->set_evt_reducer_opt("none");
+  reco->set_evt_reducer_opt("none"); // "ahs"
   reco->set_enable_eval_dst(true);
   for (int ii = 0; ii <= 3; ii++) reco->add_eval_list(ii);
   reco->set_enable_eval(true);
   reco->set_eval_file_name("eval.root");
   se->registerSubsystem(reco);
-
-  //VertexFit* vtx_fit = new VertexFit();
-  ////vtx_fit->set_eval_file_name(vtxevalloc);
-  //se->registerSubsystem(vtx_fit);
 
   SQVertexing* vtx = new SQVertexing();
   //vtx->Verbosity(99);
@@ -72,7 +68,7 @@ int Fun4All(const int run_id, const int spill_id, const string DST_in, const str
   se->registerSubsystem(new SQVertexing("vtx_pm", +1, +1));
   se->registerSubsystem(new SQVertexing("vtx_mm", -1, -1));
   
-  se->registerSubsystem(new AnaDimuonV2());
+  se->registerSubsystem(new AnaDimuon());
   se->registerSubsystem(new AnaDimuonLikeSign("AnaDimuonPP", "PP"));
   se->registerSubsystem(new AnaDimuonLikeSign("AnaDimuonMM", "MM"));
 

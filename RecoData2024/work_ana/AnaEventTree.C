@@ -30,7 +30,7 @@ void AnaEventTree(const char* dir_data_base="data/ana")
   //}
   //gSystem->FreeDirectory(dirp);
 
-  if (ana_dimuon) AnaDimuonV2::AnalyzeTree(tree);
+  if (ana_dimuon) AnaDimuon::AnalyzeTree(tree);
   else            AnaTrack::AnalyzeTree(tree);
   exit(0);
 }
