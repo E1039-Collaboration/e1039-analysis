@@ -1,3 +1,7 @@
 list_dst.txt
+info_dst.txt
+lumi_info.txt
+lumi_list.txt
+lumi_tot.txt
 result
 *.root
