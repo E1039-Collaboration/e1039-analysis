@@ -45,3 +45,15 @@ You might submit more jobs when the statistics are not enough;
 ```
 ./gridsub.sh -g -j 101-200 -e 5000 jpsi_20211011
 ```
+
+## Recommended Job Configurations
+
+As of July 28, 2025.
+The embedding data (i.e. NIM4 events) are of 2000 events * 46 files.
+Thus a similar amount of MC signals should be generated.
+
+```
+./gridsub.sh -g -m dy   -j 50 -e 3000 20250728
+./gridsub.sh -g -m jpsi -j 50 -e 3000 20250728
+./gridsub.sh -g -m psip -j 50 -e 3000 20250728
+```

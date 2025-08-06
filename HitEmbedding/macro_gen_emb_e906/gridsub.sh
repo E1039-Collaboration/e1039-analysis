@@ -78,7 +78,7 @@ while read DB_SERVER DB_SCHEMA RUN ROADSET ; do
     cp -p $DIR_MACRO/gridrun.sh $DIR_WORK_RUN
     
     if [ $USE_GRID == yes ] ; then
-	CMD="/e906/app/software/script/jobsub_submit_spinquest.sh"
+	CMD="/exp/seaquest/app/software/script/jobsub_submit_spinquest.sh"
 	CMD+=" --expected-lifetime='short'" # medium=8h, short=3h, long=23h
 	CMD+=" -L $DIR_WORK_RUN/log_gridrun.txt"
 	CMD+=" -f $DIR_WORK/input.tar.gz"

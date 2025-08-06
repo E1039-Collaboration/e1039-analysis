@@ -2,6 +2,14 @@ R__LOAD_LIBRARY(libana_embedding)
 
 int Fun4All(const int n_dst_ana=0, const char* fn_list_dst="list_dst.txt")
 {
+  recoConsts *rc = recoConsts::instance();
+  rc->set_IntFlag("RUNNUMBER", 5433); /// The geometry is selected based on run number.
+  rc->set_IntFlag("ROADSET_ID", 131); /// We have to manually select it...
+  rc->set_CharFlag("AlignmentMille", "$E1039_RESOURCE/alignment/run0/align_mille_v10_a.txt");
+  rc->set_CharFlag("AlignmentHodo", "");
+  rc->set_CharFlag("AlignmentProp", "");
+  rc->set_CharFlag("Calibration", "");
+  
   Fun4AllServer* se = Fun4AllServer::instance();
   Fun4AllInputManager* man_in = new Fun4AllDstInputManager("DSTIN");
   se->registerInputManager(man_in);

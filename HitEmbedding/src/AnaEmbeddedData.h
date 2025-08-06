@@ -2,6 +2,7 @@
 #define _ANA_EMBEDDED_DATA__H_
 #include <map>
 #include <fun4all/SubsysReco.h>
+#include <UtilAna/TrigRoadset.h>
 #include "TreeData.h"
 class TFile;
 class TTree;
@@ -27,17 +28,23 @@ class AnaEmbeddedData: public SubsysReco {
   SQHitVector   * mi_vec_hit;
   SQTrackVector * mi_vec_trk;
   SQDimuonVector* mi_vec_dim;
-  SRecEvent     * mi_srec;
+  SQTrackVector*  mi_vec_trk_rec;
+  SQDimuonVector* mi_vec_dim_rec;
 
   /// Output
   TFile*     mo_file;
   TTree*     mo_tree;
   EventData  mo_evt;
+  OccData    mo_occ;
   TrackList  mo_trk_true;
   TrackList  mo_trk_reco;
   DimuonList mo_dim_true;
   DimuonList mo_dim_reco;
 
+  int m_run_id;
+  int m_rs_id;
+  UtilTrigger::TrigRoadset m_rs;
+  
  public:
   AnaEmbeddedData(const std::string name="AnaEmbeddedData");
   virtual ~AnaEmbeddedData() {;}

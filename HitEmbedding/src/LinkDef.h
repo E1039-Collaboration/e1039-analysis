@@ -5,15 +5,18 @@
 
 #pragma link C++ class FilterE906Nim3-!;
 #pragma link C++ class GenEmbeddingData-!;
+#pragma link C++ class GenEmbeddingDataNim4-!;
 #pragma link C++ class DoEmbedding-!;
 #pragma link C++ class AnaEmbeddedData-!;
 #pragma link C++ class AnaCleanAndMessyData-!;
 
 // TreeData.h
 #pragma link C++ class EventData+;
+#pragma link C++ class OccData+;
 #pragma link C++ class TrackData+;
 #pragma link C++ class DimuonData+;
 #pragma link C++ class TrackList+;
 #pragma link C++ class DimuonList+;
+#pragma link C++ class EmbQAData+;
 
 #endif

@@ -4,8 +4,12 @@
 
 ## You can put multiple directories separated by space 
 ## and also use the shell wild card (*).
-DIR_SIG="../macro_gen_signal/data/jpsi_20211011"
-DIR_EMB="/pnfs/e1039/persistent/users/kenichi/data_emb_e906"
+DIR_SIG="../macro_gen_signal/data/dy_20250728"
+#DIR_SIG="../macro_gen_signal/data/jpsi_20250728"
+#DIR_SIG="../macro_gen_signal/data/psip_20250728"
+
+#DIR_EMB="/pnfs/e1039/persistent/users/kenichi/data_emb_e906"
+DIR_EMB="/pnfs/e1039/scratch/users/kenichi/HitEmbedding/data_emb_nim4_merged"
 
 ##
 ## Functions

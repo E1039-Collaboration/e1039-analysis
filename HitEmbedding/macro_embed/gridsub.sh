@@ -8,8 +8,8 @@ test ! -f $FN_LIST_EMB && echo "Cannot find '$FN_LIST_EMB'.  Abort." && exit
 
 DO_OVERWRITE=no
 USE_GRID=no
-JOB_B=
-JOB_E=  # 0 = All available signal and/or embedding files
+JOB_B=1
+JOB_E=1  # 0 = All available signal and/or embedding files
 N_EVT=0 # 0 = All events in each signal+embedding file
 OPTIND=1
 while getopts ":ogj:e:" OPT ; do
@@ -62,7 +62,7 @@ fi
 cd $DIR_MACRO
 mkdir -p $DIR_WORK
 rm -f    $DIR_WORK/input.tar.gz
-tar czf  $DIR_WORK/input.tar.gz  *.C  ../inst
+tar czf  $DIR_WORK/input.tar.gz  *.C  ../setup.sh ../inst
 
 for (( JOB_I = $JOB_B; JOB_I <= $JOB_E; JOB_I++ )) ; do
     FN_SIG=${LIST_SIG[$((JOB_I-1))]}
@@ -84,8 +84,9 @@ for (( JOB_I = $JOB_B; JOB_I <= $JOB_E; JOB_I++ )) ; do
     cp -p $DIR_MACRO/gridrun.sh $DIR_WORK_JOB
 
     if [ $USE_GRID == yes ]; then
-	CMD="/e906/app/software/script/jobsub_submit_spinquest.sh"
-	CMD+=" --expected-lifetime='medium'" # medium=8h, short=3h, long=23h
+	CMD="/exp/seaquest/app/software/script/jobsub_submit_spinquest.sh"
+	#CMD+=" --resource-provides=usage_model=DEDICATED" # ,OPPORTUNISTIC
+	CMD+=" --expected-lifetime='long'" # medium=8h, short=3h, long=23h
 	CMD+=" -L $DIR_WORK_JOB/log_gridrun.txt"
 	CMD+=" -f $DIR_WORK/input.tar.gz"
 	CMD+=" -f $FN_SIG"
@@ -102,7 +103,8 @@ for (( JOB_I = $JOB_B; JOB_I <= $JOB_E; JOB_I++ )) ; do
 	cp -p $DIR_WORK/input.tar.gz $DIR_WORK_JOB/in
 	ln    -s  $FN_SIG            $DIR_WORK_JOB/in
 	ln    -s  $FN_EMB            $DIR_WORK_JOB/in
-	cd $DIR_WORK_JOB
+	mkdir -p $DIR_WORK_JOB/exe
+	cd $DIR_WORK_JOB/exe
 	$DIR_WORK_JOB/gridrun.sh $N_EVT |& tee $DIR_WORK_JOB/log_gridrun.txt
     fi
 done

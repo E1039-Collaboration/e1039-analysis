@@ -2,7 +2,12 @@ DIR_TOP=$(dirname $(readlink -f $BASH_SOURCE))
 DIR_BUILD=$DIR_TOP/build
 DIR_INST=$DIR_TOP/inst
 
-source /exp/seaquest/app/software/osg/software/e1039/this-e1039.sh
+E1039_CORE_VERSION=pr.164
+FN_SETUP=/exp/seaquest/app/software/osg/software/e1039/this-e1039.sh
+if [ ! -e $FN_SETUP ] ; then # On grid
+    FN_SETUP=/cvmfs/seaquest.opensciencegrid.org/seaquest/${FN_SETUP#/exp/seaquest/app/software/osg/}
+fi
+source $FN_SETUP
 export   LD_LIBRARY_PATH=$DIR_TOP/inst/lib:$LD_LIBRARY_PATH
 export ROOT_INCLUDE_PATH=$DIR_TOP/inst/include:$ROOT_INCLUDE_PATH
 

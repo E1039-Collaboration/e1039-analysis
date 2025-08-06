@@ -122,6 +122,13 @@ int DoEmbedding::process_event(PHCompositeNode* topNode)
   if (Verbosity() > 9) cout << "  N of hits to be embedded: " << m_emb_sqvec_hit->size() << endl;
   for (SQHitVector::Iter it = m_emb_sqvec_hit->begin(); it != m_emb_sqvec_hit->end(); it++) {
     SQHit* hit_emb = *it;
+    if (Verbosity() > 10) {
+      cout << "  " << hit_emb->get_hit_id()
+           << " " << hit_emb->get_detector_id()
+           << " " << hit_emb->get_element_id()
+           << " " << hit_emb->get_pos()
+           << " " << hit_emb->get_drift_distance() << endl;
+      }
     hit_emb->set_hit_id  (hit_emb->get_hit_id  () + m_hit_id_shift);
     hit_emb->set_track_id(hit_emb->get_track_id() + m_trk_id_shift);
     mi_vec_hit->push_back(hit_emb);

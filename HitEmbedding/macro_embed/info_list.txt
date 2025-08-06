@@ -1,17 +1,17 @@
-Time: 2021-10-12 14:46:37
+Time: 2025-08-02 11:14:57
 
 List: list_sig_file.txt
-  Directory = ../macro_gen_signal/data/jpsi_20211011
+  Directory = ../macro_gen_signal/data/dy_20250728
   File name = DST.root
   Tree name = T
-  N of files = 98
-  N of events in the 1st file = 5000
-  N of total events ~= 490000
+  N of files = 100
+  N of events in the 1st file = 3000
+  N of total events ~= 300000
 
 List: list_emb_file.txt
-  Directory = /pnfs/e1039/persistent/users/kenichi/data_emb_e906
+  Directory = /pnfs/e1039/scratch/users/kenichi/HitEmbedding/data_emb_nim4_merged
   File name = embedding_data.root
   Tree name = tree
-  N of files = 160
-  N of events in the 1st file = 5073
-  N of total events ~= 811680
+  N of files = 46
+  N of events in the 1st file = 2000
+  N of total events ~= 92000

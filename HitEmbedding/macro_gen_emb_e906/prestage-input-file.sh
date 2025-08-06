@@ -1,7 +1,7 @@
 #!/bin/bash
 ## Script to prestage the E906 digit file.
 DIR_BASE=/pnfs/e906/production/digit/R009
-MANIP=/e906/app/software/script/manip-pnfs-file.sh
+MANIP=/exp/seaquest/app/software/script/manip-pnfs-file.sh
 
 find $DIR_BASE -mindepth 2 -maxdepth 2 -type d | while read DIR_TGT ; do
     echo "----------------------------------------------------------------"

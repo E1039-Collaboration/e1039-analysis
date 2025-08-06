@@ -36,7 +36,7 @@ if [ -e $DIR_OUT ] ; then
     rm -rf $DIR_OUT
 fi
 
-source /e906/app/software/osg/software/e1039/this-e1039.sh
+source /exp/seaquest/app/software/osg/software/e1039/this-e1039.sh
 
 OUT_I=1
 LIST_ROOT=

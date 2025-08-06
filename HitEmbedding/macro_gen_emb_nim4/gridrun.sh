@@ -1,8 +1,8 @@
 #!/bin/bash
-
-N_EVT=$1
-FN_SIG=DST.root
-FN_EMB=embedding_data.root
+RUN=$1
+FNAME=$2
+LIST_NAME=$3
+N_EVT=$4
 
 if [ -z "$CONDOR_DIR_INPUT" -o -z "$CONDOR_DIR_OUTPUT" ] ; then
     echo "!ERROR!  CONDOR_DIR_INPUT/OUTPUT is undefined.  Abort."
@@ -18,10 +18,10 @@ source setup.sh
 
 touch timestamp.txt # All files created after this will be moved to CONDOR_DIR_OUTPUT
 
-time root -b -q "Fun4Sim.C(\"$CONDOR_DIR_INPUT/$FN_SIG\", \"$CONDOR_DIR_INPUT/$FN_EMB\", $N_EVT)"
+time root -b -q "Fun4All.C($RUN, \"$CONDOR_DIR_INPUT/$FNAME\", \"$LIST_NAME\", $N_EVT)"
 RET=$?
 if [ $RET -ne 0 ] ; then
-    echo "Error in Fun4Sim.C: $RET"
+    echo "Error in Fun4All.C: $RET"
     exit $RET
 fi
 

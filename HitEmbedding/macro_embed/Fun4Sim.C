@@ -1,4 +1,5 @@
 R__LOAD_LIBRARY(libfun4all)
+//R__LOAD_LIBRARY(libg4detectors)
 R__LOAD_LIBRARY(libana_embedding)
 R__LOAD_LIBRARY(libktracker)
 using namespace std;
@@ -8,17 +9,36 @@ int Fun4Sim(const char* fn_sig, const char* fn_emb, const int n_evt_in=0)
   ///
   /// Global parameters
   ///
-  const double FMAGSTR = -1.054;
-  const double KMAGSTR = -0.951;
   recoConsts *rc = recoConsts::instance();
-  rc->set_DoubleFlag("FMAGSTR", FMAGSTR);
-  rc->set_DoubleFlag("KMAGSTR", KMAGSTR);
+  rc->set_IntFlag("RUNNUMBER", 5433); /// The geometry is selected based on run number.
+  rc->set_DoubleFlag("FMAGSTR", -1.044);
+  rc->set_DoubleFlag("KMAGSTR", -1.025);
+  rc->set_DoubleFlag("SIGX_BEAM", 0.3);
+  rc->set_DoubleFlag("SIGY_BEAM", 0.3);
+  rc->set_BoolFlag("COARSE_MODE", false);
+  rc->set_BoolFlag("REQUIRE_MUID", false);
+  rc->set_CharFlag("HIT_MASK_MODE", "X");
+  rc->set_CharFlag("AlignmentMille", "$E1039_RESOURCE/alignment/run0/align_mille_v10_a.txt");
+  rc->set_CharFlag("AlignmentHodo", "");
+  rc->set_CharFlag("AlignmentProp", "");
+  rc->set_CharFlag("Calibration", "");
+  rc->set_CharFlag("Calibration", "");
+  rc->set_IntFlag ("MaxHitsDC0" , int(350));
+  rc->set_IntFlag ("MaxHitsDC1" , int(350));
+  rc->set_IntFlag ("MaxHitsDC2" , int(170));
+  rc->set_IntFlag ("MaxHitsDC3p", int(140));
+  rc->set_IntFlag ("MaxHitsDC3m", int(140));
+  rc->set_DoubleFlag("RejectWinDC0" , 0.3);
+  rc->set_DoubleFlag("RejectWinDC1" , 0.5);
+  rc->set_DoubleFlag("RejectWinDC2" , 0.35);
+  rc->set_DoubleFlag("RejectWinDC3p", 0.24);
+  rc->set_DoubleFlag("RejectWinDC3m", 0.24);
 
   Fun4AllServer *se = Fun4AllServer::instance();
 
   /// Hit embedding
   DoEmbedding* do_emb = new DoEmbedding();
-  do_emb->Verbosity(10);
+  //do_emb->Verbosity(10);
   do_emb->AddEmbDataFile(fn_emb);
   int n_evt_emb = do_emb->GetNumEmbEvents();
   se->registerSubsystem(do_emb);
@@ -29,13 +49,15 @@ int Fun4Sim(const char* fn_sig, const char* fn_emb, const int n_evt_in=0)
   SQReco* reco = new SQReco();
   //reco->Verbosity(10);
   reco->use_geom_io_node(true);
+  reco->set_legacy_rec_container(false);
+  reco->set_enable_KF(true);
+  reco->setInputTy(SQReco::E1039);
+  reco->setFitterTy(SQReco::KFREF);
   reco->set_evt_reducer_opt("none");
   se->registerSubsystem(reco);
 
-  VertexFit* vertexing = new VertexFit();
-  //vertexing->Verbosity(1);
-  vertexing->enable_fit_target_center();
-  se->registerSubsystem(vertexing);
+  SQVertexing* vtx = new SQVertexing();
+  se->registerSubsystem(vtx);
 
   ///
   /// Input, output and execution
