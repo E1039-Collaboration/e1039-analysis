@@ -1,6 +1,4 @@
-//R__LOAD_LIBRARY(ktracker)
-//R__LOAD_LIBRARY(sqgenfit)
-R__LOAD_LIBRARY(E906Ana)
+R__LOAD_LIBRARY(TrackMixingNMSU)
 #include <TSystem.h>
 #include <TFile.h>
 #include <TTree.h>
@@ -18,7 +16,6 @@ using namespace std;
 
 UtilTrigger::TrigRoadset rs;
 
-//int dim_origin(SRecTrack* trk_pos, SRecTrack* trk_neg);
 bool SelectDimuon(SRecDimuon* dim, SRecTrack* trk_pos, SRecTrack* trk_neg);
 int GetSpin(const int run_id);
 
@@ -132,50 +129,6 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
   f_out->Close();
   exit(0);
 }
-
-//int dim_origin(SRecTrack* trk_pos, SRecTrack* trk_neg)
-//{
-//  double z_pos = trk_pos->get_pos_vtx().Z();
-//  double z_neg = trk_neg->get_pos_vtx().Z();
-//
-//  double pos_chisq_t  = trk_pos->getChisqTarget();
-//  double pos_chisq_d  = trk_pos->getChisqDump();
-//  double pos_chisq_us = trk_pos->get_chsiq_upstream();
-//
-//  double neg_chisq_t  = trk_neg->getChisqTarget();
-//  double neg_chisq_d  = trk_neg->getChisqDump();
-//  double neg_chisq_us = trk_neg->get_chsiq_upstream();
-//  
-//  double pos_chi_td  = pos_chisq_t - pos_chisq_d;
-//  double pos_chi_tus = pos_chisq_t - pos_chisq_us;
-//  double neg_chi_td  = neg_chisq_t - neg_chisq_d;
-//  double neg_chi_tus = neg_chisq_t - neg_chisq_us;
-//  
-//  //
-//  //Target_Like:- 0
-//  //
-//  bool tgt_pos_ok = pos_chisq_t >=0 && pos_chisq_d >=0 && pos_chisq_us >=0 &&
-//    pos_chi_td <0 && pos_chi_tus <0;
-//  bool tgt_neg_ok = neg_chisq_t >=0 && neg_chisq_d >=0 && neg_chisq_us >=0 &&
-//    neg_chi_td <0 && neg_chi_tus <0;	
-//  if (tgt_pos_ok && tgt_neg_ok && z_pos > -690 && z_neg > -690) return 0;
-//  
-//  //
-//  //Dump_Like:- 1
-//  //
-//  bool d_pos_ok = pos_chisq_t >=0. && pos_chisq_d >=0. && -(pos_chi_td)<0.;
-//  bool d_neg_ok = neg_chisq_t >=0. && neg_chisq_d >=0. && -(neg_chi_td)<0.;
-//  if (d_pos_ok && d_neg_ok) return 1;
-//  
-//  //
-//  //Upstream_Like:- 2
-//  //
-//  bool us_pos_ok = pos_chisq_t >=0. && pos_chisq_us >=0. && -(pos_chi_tus)<0.;
-//  bool us_neg_ok = neg_chisq_t >=0. && neg_chisq_us >=0. && -(neg_chi_tus)<0.;
-//  if (us_pos_ok && us_neg_ok) return 2;
-//  
-//  return -999;
-//}
 
 /**
  * Dimuon selection being used by Liliet, confirmed on 2025-08-18.

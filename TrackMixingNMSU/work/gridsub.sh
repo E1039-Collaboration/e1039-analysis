@@ -119,7 +119,7 @@ for (( RUN_I = $RUN_B ; RUN_I <= $RUN_E ; RUN_I++ )) ; do
 	fi
 	
         mkdir -p $DIR_WORK_RUN/out
-	cp -p $DIR_MACRO/exec-step1-sub.sh $DIR_WORK_RUN
+	cp -p $DIR_MACRO/gridrun.sh $DIR_WORK_RUN
 
 	##
 	## Loop over the spills
@@ -147,7 +147,7 @@ for (( RUN_I = $RUN_B ; RUN_I <= $RUN_E ; RUN_I++ )) ; do
 		#CMD="/exp/seaquest/app/software/script/jobsub_submit_spinquest.sh"
 		#CMD+=" --resource-provides=usage_model=DEDICATED,OPPORTUNISTIC"
 		#CMD+=" --expected-lifetime='short'" # medium=8h, short=3h, long=23h
-		#CMD+=" -L $DIR_WORK_RUN/log_exec-step1-sub.txt"
+		#CMD+=" -L $DIR_WORK_RUN/log_gridrun.txt"
 		#CMD+=" -f $DIR_WORK/input.tar.gz"
 		#CMD+=" -f $DIR_WORK_JOB/in/$FN_LIST_IN"
 		#while read SPILL FNAME ; do
@@ -155,7 +155,7 @@ for (( RUN_I = $RUN_B ; RUN_I <= $RUN_E ; RUN_I++ )) ; do
                 #        #ln -s $DIR_DST/run_$RUN6/spill_00$SPILL/out/$FNAME $DIR_WORK_RUN/in/$FNAME
                 #done <$DIR_WORK_RUN/$FN_LIST_IN
 		#CMD+=" -d OUTPUT $DIR_WORK_RUN/out"
-		#CMD+=" file://$DIR_WORK_RUN/exec-step1-sub.sh $RUN $FN_LIST_IN $N_EVT"
+		#CMD+=" file://$DIR_WORK_RUN/gridrun.sh $RUN $FN_LIST_IN $N_EVT"
 		#$CMD |& tee $DIR_WORK_RUN/log_jobsub_submit.txt
 		#RET_SUB=${PIPESTATUS[0]}
 		#test $RET_SUB -ne 0 && exit $RET_SUB
@@ -172,6 +172,6 @@ for (( RUN_I = $RUN_B ; RUN_I <= $RUN_E ; RUN_I++ )) ; do
             done <$DIR_WORK_RUN/$FN_LIST_IN
 	    mkdir -p $DIR_WORK_RUN/exe
 	    cd       $DIR_WORK_RUN/exe
-	    $DIR_WORK_RUN/exec-step1-sub.sh $RUN $FN_LIST_IN $N_EVT |& tee $DIR_WORK_RUN/log_exec-step1-sub.txt
+	    $DIR_WORK_RUN/gridrun.sh $RUN $FN_LIST_IN $N_EVT |& tee $DIR_WORK_RUN/log_gridrun.txt
     	fi
 done

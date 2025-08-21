@@ -17,7 +17,7 @@ source setup.sh
 echo "E1039_CORE = $E1039_CORE"
 
 touch timestamp.txt
-time root.exe -b -l -q "AnaStep1.C($RUN, \"$CONDOR_DIR_INPUT\", \"$CONDOR_DIR_INPUT/$FN_LIST_IN\", $N_EVT)"
+time root.exe -b -l -q "DoTrackMixing.C($RUN, \"$CONDOR_DIR_INPUT\", \"$CONDOR_DIR_INPUT/$FN_LIST_IN\", $N_EVT)"
 RET=$?
 if [ $RET -ne 0 ] ; then
     echo "Error in Fun4All.C: $RET"
@@ -26,4 +26,4 @@ fi
 
 find . -mindepth 1 -maxdepth 1 -newer timestamp.txt -exec mv {} $CONDOR_DIR_OUTPUT \;
 
-echo "exec-step1-sub.sh finished!"
+echo "gridrun.sh finished!"

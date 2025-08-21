@@ -10,9 +10,9 @@
  * You find or create all analysis modules under `src/`, such as `AnaHodoTime`.
  * You select one of them in `MacroCommon.C`.
  */
-R__LOAD_LIBRARY(E906Ana)
+R__LOAD_LIBRARY(TrackMixingNMSU)
 
-void AnaStep1(const int run_id, const string dir_in, const string fn_list, const int n_evt)
+void DoTrackMixing(const int run_id, const string dir_in, const string fn_list, const int n_evt)
 {
   vector<string> list_in;
   ifstream ifs(fn_list);

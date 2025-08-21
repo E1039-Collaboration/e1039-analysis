@@ -21,14 +21,25 @@ Soruce codes related to mixing in `/src` are,
 All other files in `/src` except the ones related to base and tree data structure modules, performs various analysis tasks as explained here (https://github.com/abinashpun/seaquest-projects/blob/main/e906-root-ana/src/AnaSortMixVertex.cc).
 You may modify the soruce codes to implement your own analysis.
 Do `make-this` whenever a file in `/src` is modified.
-Do `cmake-this` and `make-thi` whenever a file is added or removed from `/src`.
+Do `cmake-this` and `make-this` whenever a file is added or removed from `/src`.
 
 To run the mixing in GPVM,
 - `source setup.sh`
 - cd to `work`
 - list all runs and spills in `list_run_spill.txt`.
-- execute `./exec-step1.sh`
-All outputs will be saved in a newly made `scratch` directory.
+- execute `./gridsub.sh -s 2`.
+  It processes only two spills in the first run.
+  All outputs will be saved in a newly made `scratch` directory.
+  You should confirm that the output file contains trees and non-zero entries.
+- Execute `./gridsub.sh -o -n 1-` to process all runs.
+
+
+## To-Do List
+
+- Stop using the local version of SQVertexing.
+- Stop using many `work/list_*.txt` files for simplicity.
+- Delete unused files (classes) under `src/`.
+
 
 ## Contact
 
