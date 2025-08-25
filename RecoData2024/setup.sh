@@ -2,8 +2,8 @@ DIR_TOP=$(dirname $(readlink -f $BASH_SOURCE))
 DIR_BUILD=$DIR_TOP/build
 DIR_INST=$DIR_TOP/inst
 
-#E1039_SHARE_VERSION=20240317
-E1039_CORE_VERSION=pr.155
+#E1039_SHARE_VERSION=20250519
+#E1039_CORE_VERSION=pr.163
 #E1039_CORE_DIR=/seaquest/users/$USER/e1039/git/core-inst
 FN_SETUP=/exp/seaquest/app/software/osg/software/e1039/this-e1039.sh
 if [ ! -e $FN_SETUP ] ; then # On grid

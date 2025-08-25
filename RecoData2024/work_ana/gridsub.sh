@@ -1,15 +1,17 @@
 #!/bin/bash
 DIR_MACRO=$(dirname $(readlink -f $BASH_SOURCE))
 #DIR_DST=/pnfs/e1039/scratch/users/$USER/RecoData2024/reco
-DIR_DST=/pnfs/e1039/scratch/users/kenichi/RecoData2024/reco-20241128
+#DIR_DST=/pnfs/e1039/persistent/users/lcalerod/RecoData2024/phys_pos/reco
+#DIR_DST=/pnfs/e1039/persistent/users/kenichi/RecoData2024/reco-20250619
+DIR_DST=/pnfs/e1039/persistent/users/kenichi/RecoData2024/reco-20250804
 
 JOB_NAME=ana
 DO_OVERWRITE=no
 USE_GRID=no
 FORCE_PNFS=no
 JOB_B=1
-JOB_E=1 # 0 = All available signal and/or embedding files
-N_EVT=0 # 0 = All events in each signal+embedding file
+JOB_E=1
+N_EVT=0
 N_JOB_MAX=0 # N of max jobs at a time.  0 = no limit
 OPTIND=1
 while getopts ":n:ogpj:e:m:" OPT ; do
