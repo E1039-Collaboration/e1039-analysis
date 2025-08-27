@@ -39,23 +39,41 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
   TFile* f_out = new TFile("tree.root", "RECREATE");
   int run_id;
   int spin;
+  int D1;
+  double z;
   double px, py, pz;
   double mass;
+  double trk_sep;
   TTree* tr_org = new TTree("tree_org", "");
-  tr_org->Branch("run_id", &run_id);
-  tr_org->Branch("spin"  , &spin);
-  tr_org->Branch("px"    , &px);
-  tr_org->Branch("py"    , &py);
-  tr_org->Branch("pz"    , &pz);
-  tr_org->Branch("mass"  , &mass);
+  tr_org->Branch("run_id" , &run_id);
+  tr_org->Branch("spin"   , &spin);
+  tr_org->Branch("D1"     , &D1);
+  tr_org->Branch("z"      , &z );
+  tr_org->Branch("px"     , &px);
+  tr_org->Branch("py"     , &py);
+  tr_org->Branch("pz"     , &pz);
+  tr_org->Branch("mass"   , &mass);
+  tr_org->Branch("trk_sep", &trk_sep);
   TTree *tr_mix = new TTree("tree_mix", "");
-  tr_mix->Branch("run_id", &run_id);
-  tr_mix->Branch("spin"  , &spin);
-  tr_mix->Branch("px"    , &px);
-  tr_mix->Branch("py"    , &py);
-  tr_mix->Branch("pz"    , &pz);
-  tr_mix->Branch("mass"  , &mass);
+  tr_mix->Branch("run_id" , &run_id);
+  tr_mix->Branch("spin"   , &spin);
+  tr_mix->Branch("D1"     , &D1);
+  tr_mix->Branch("z"      , &z );
+  tr_mix->Branch("px"     , &px);
+  tr_mix->Branch("py"     , &py);
+  tr_mix->Branch("pz"     , &pz);
+  tr_mix->Branch("mass"   , &mass);
+  tr_mix->Branch("trk_sep", &trk_sep);
 
+  TH1* h1_D1_org    = new TH1D("h1_D1_org"  , ";D1;N of events", 600, -0.5, 599.5);
+  TH1* h1_D1_mix    = new TH1D("h1_D1_mix"  , ";D1;N of events", 600, -0.5, 599.5);
+  TH1* h1_dD1_mix   = new TH1D("h1_dD1_mix" , ";D1^{#mu+} #minus D1^{#mu#minus};N of events", 200, -99.5, 100.5);
+  TH1* h1_dD2_mix   = new TH1D("h1_dD2_mix" , ";D2^{#mu+} #minus D2^{#mu#minus};N of events", 200, -99.5, 100.5);
+  TH1* h1_dD3p_mix  = new TH1D("h1_dD3p_mix", ";D3p^{#mu+} #minus D3p^{#mu#minus};N of events", 200, -99.5, 100.5);
+  TH1* h1_dD3m_mix  = new TH1D("h1_dD3m_mix", ";D3m^{#mu+} #minus D3m^{#mu#minus};N of events", 200, -99.5, 100.5);
+  TH1* h1_n_dim_org = new TH1D("h1_n_dim_org", ";N of good dimuons;N of events", 5, -0.5, 4.5);
+  TH1* h1_n_dim_mix = new TH1D("h1_n_dim_mix", ";N of good dimuons;N of events", 5, -0.5, 4.5);
+  
   unsigned int n_run = list_run.size();
   for (unsigned int i_run = 0; i_run < n_run; i_run++) {
     run_id = list_run[i_run];
@@ -77,9 +95,24 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
     }
     SRecEvent* sorted_event = new SRecEvent();
     SRecEvent* mixed_event = new SRecEvent();
-    std::vector<SRecTrack> * pos_tracks =0;
-    std::vector<SRecTrack> * neg_tracks =0;
+    //std::vector<SRecTrack> * pos_tracks =0;
+    //std::vector<SRecTrack> * neg_tracks =0;
+    int b_occuD1;
+    int b_plus_occuD1 , b_minus_occuD1;
+    int b_plus_occuD2 , b_minus_occuD2;
+    int b_plus_occuD3p, b_minus_occuD3p;
+    int b_plus_occuD3m, b_minus_occuD3m;
+    _sorted->SetBranchAddress("occuD1", &b_occuD1);
     _sorted->SetBranchAddress("recEvent", &sorted_event);
+    
+    _mixed->SetBranchAddress( "plus_occuD1" , & b_plus_occuD1 );
+    _mixed->SetBranchAddress("minus_occuD1" , &b_minus_occuD1 );
+    _mixed->SetBranchAddress( "plus_occuD2" , & b_plus_occuD2 );
+    _mixed->SetBranchAddress("minus_occuD2" , &b_minus_occuD2 );
+    _mixed->SetBranchAddress( "plus_occuD3p", & b_plus_occuD3p);
+    _mixed->SetBranchAddress("minus_occuD3p", &b_minus_occuD3p);
+    _mixed->SetBranchAddress( "plus_occuD3m", & b_plus_occuD3m);
+    _mixed->SetBranchAddress("minus_occuD3m", &b_minus_occuD3m);
     _mixed->SetBranchAddress("recEvent", &mixed_event);
 
     spin = GetSpin(run_id);
@@ -87,45 +120,65 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
     int n_sorted = _sorted ->GetEntries();
     for (int i= 0; i < n_sorted; i++){
       _sorted->GetEntry(i);
+      D1 = b_occuD1;
+      h1_D1_org->Fill(b_occuD1);
+      int n_dim_org_ok = 0;
       for (int n_dims=0; n_dims <sorted_event->getNDimuons(); n_dims++){
-        SRecDimuon s_dim = sorted_event->getDimuon(n_dims);
-        SRecTrack* trk_pos = &(sorted_event->getTrack(s_dim.get_track_id_pos()));
-        SRecTrack* trk_neg = &(sorted_event->getTrack(s_dim.get_track_id_neg()));
+        SRecDimuon dim = sorted_event->getDimuon(n_dims);
+        SRecTrack* trk_pos = &(sorted_event->getTrack(dim.get_track_id_pos()));
+        SRecTrack* trk_neg = &(sorted_event->getTrack(dim.get_track_id_neg()));
 
-        if (! SelectDimuon(&s_dim, trk_pos, trk_neg)) continue;
-        TLorentzVector mom = s_dim.p_pos_target + s_dim.p_neg_target;
+        if (! SelectDimuon(&dim, trk_pos, trk_neg)) continue;
+        TLorentzVector mom = dim.p_pos_target + dim.p_neg_target;
+        z  = dim.get_pos().Z();
         px = mom.X();
         py = mom.Y();
         pz = mom.Z();
-        s_dim.calcVariables(1); //1 : re-fit to target, 2: re-fit to dump
-        mass = s_dim.get_mass();
+        dim.calcVariables(1); //1 : re-fit to target, 2: re-fit to dump
+        mass = dim.get_mass();
+        trk_sep = trk_pos->get_pos_vtx().Z() - trk_neg->get_pos_vtx().Z();
         tr_org->Fill();
+        n_dim_org_ok++;
       }
+      h1_n_dim_org->Fill(n_dim_org_ok);
     }
 
     int n_mixed = _mixed ->GetEntries();
     for (int j= 0; j < n_mixed; j++){
       _mixed->GetEntry(j);
-      for (int n_dims=0; n_dims <mixed_event->getNDimuons(); n_dims++){
-        SRecDimuon m_dim = mixed_event->getDimuon(n_dims);
-        SRecTrack* trk_pos = &(mixed_event->getTrack(m_dim.get_track_id_pos()));
-        SRecTrack* trk_neg = &(mixed_event->getTrack(m_dim.get_track_id_neg()));
+      D1 = (b_plus_occuD1  + b_minus_occuD1 ) / 2;
+      h1_D1_mix  ->Fill((b_plus_occuD1  + b_minus_occuD1 ) / 2);
+      h1_dD1_mix ->Fill( b_plus_occuD1  - b_minus_occuD1      );
+      h1_dD2_mix ->Fill( b_plus_occuD2  - b_minus_occuD2      );
+      h1_dD3p_mix->Fill( b_plus_occuD3p - b_minus_occuD3p     );
+      h1_dD3m_mix->Fill( b_plus_occuD3m - b_minus_occuD3m     );
 
-        if (! SelectDimuon(&m_dim, trk_pos, trk_neg)) continue;
-        TLorentzVector mom = m_dim.p_pos_target + m_dim.p_neg_target;
+      int n_dim_mix_ok = 0;
+      for (int n_dims=0; n_dims <mixed_event->getNDimuons(); n_dims++){
+        SRecDimuon dim = mixed_event->getDimuon(n_dims);
+        SRecTrack* trk_pos = &(mixed_event->getTrack(dim.get_track_id_pos()));
+        SRecTrack* trk_neg = &(mixed_event->getTrack(dim.get_track_id_neg()));
+
+        if (! SelectDimuon(&dim, trk_pos, trk_neg)) continue;
+        TLorentzVector mom = dim.p_pos_target + dim.p_neg_target;
+        z  = dim.get_pos().Z();
         px = mom.X();
         py = mom.Y();
         pz = mom.Z();
-        m_dim.calcVariables(1);
-        mass = m_dim.get_mass();
+        dim.calcVariables(1);
+        mass = dim.get_mass();
+        trk_sep = trk_pos->get_pos_vtx().Z() - trk_neg->get_pos_vtx().Z();
         tr_mix->Fill();
+        n_dim_mix_ok++;
       }
+      h1_n_dim_mix->Fill(n_dim_mix_ok);
     }
   }
   
   f_out->cd();
-  tr_org->Write();
-  tr_mix->Write();
+  f_out->Write();
+  //tr_org->Write();
+  //tr_mix->Write();
   f_out->Close();
   exit(0);
 }
@@ -143,13 +196,13 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
  */
 bool SelectDimuon(SRecDimuon* dim, SRecTrack* trk_pos, SRecTrack* trk_neg)
 {
-  //int road_pos = trk_pos->getTriggerRoad();
-  //int road_neg = trk_neg->getTriggerRoad();
-  //bool pos_top = rs.PosTop()->FindRoad(road_pos);
-  //bool pos_bot = rs.PosBot()->FindRoad(road_pos);
-  //bool neg_top = rs.NegTop()->FindRoad(road_neg);
-  //bool neg_bot = rs.NegBot()->FindRoad(road_neg);
-  //if (!(pos_top && neg_bot) && !(pos_bot && neg_top)) return false;
+  int road_pos = trk_pos->getTriggerRoad();
+  int road_neg = trk_neg->getTriggerRoad();
+  bool pos_top = rs.PosTop()->FindRoad(road_pos);
+  bool pos_bot = rs.PosBot()->FindRoad(road_pos);
+  bool neg_top = rs.NegTop()->FindRoad(road_neg);
+  bool neg_bot = rs.NegBot()->FindRoad(road_neg);
+  if (!(pos_top && neg_bot) && !(pos_bot && neg_top)) return false;
   
   double z_pos = trk_pos->get_pos_vtx().Z();
   double z_neg = trk_neg->get_pos_vtx().Z();
