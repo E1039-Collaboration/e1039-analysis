@@ -1,17 +1,4 @@
 R__LOAD_LIBRARY(TrackMixingNMSU)
-#include <TSystem.h>
-#include <TFile.h>
-#include <TTree.h>
-#include <TString.h>
-#include <TCanvas.h>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <TH1D.h>
-#include <TMultiGraph.h>
-#include <ktracker/SRecEvent.h>
-#include <ktracker/SRawEvent.h>
-#include <TLorentzVector.h>
 using namespace std;
 
 UtilTrigger::TrigRoadset rs;
@@ -95,8 +82,6 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
     }
     SRecEvent* sorted_event = new SRecEvent();
     SRecEvent* mixed_event = new SRecEvent();
-    //std::vector<SRecTrack> * pos_tracks =0;
-    //std::vector<SRecTrack> * neg_tracks =0;
     int b_occuD1;
     int b_plus_occuD1 , b_minus_occuD1;
     int b_plus_occuD2 , b_minus_occuD2;
@@ -177,8 +162,6 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
   
   f_out->cd();
   f_out->Write();
-  //tr_org->Write();
-  //tr_mix->Write();
   f_out->Close();
   exit(0);
 }
