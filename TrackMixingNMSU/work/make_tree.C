@@ -201,7 +201,7 @@ bool SelectDimuon(SRecDimuon* dim, SRecTrack* trk_pos, SRecTrack* trk_neg)
   double neg_chisq_t  = trk_neg->getChisqTarget();
   double neg_chisq_d  = trk_neg->getChisqDump();
   double neg_chisq_us = trk_neg->get_chsiq_upstream();
-  if (pos_chisq_t < 0 || pos_chisq_t < 0) return false;
+  if (pos_chisq_t < 0 || neg_chisq_t < 0) return false;
   if (pos_chisq_d - pos_chisq_t < 0 || pos_chisq_us - pos_chisq_t < 0 ||
       neg_chisq_d - neg_chisq_t < 0 || neg_chisq_us - neg_chisq_t < 0   ) return false;
 
