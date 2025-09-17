@@ -179,13 +179,13 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
  */
 bool SelectDimuon(SRecDimuon* dim, SRecTrack* trk_pos, SRecTrack* trk_neg)
 {
-  int road_pos = trk_pos->getTriggerRoad();
-  int road_neg = trk_neg->getTriggerRoad();
-  bool pos_top = rs.PosTop()->FindRoad(road_pos);
-  bool pos_bot = rs.PosBot()->FindRoad(road_pos);
-  bool neg_top = rs.NegTop()->FindRoad(road_neg);
-  bool neg_bot = rs.NegBot()->FindRoad(road_neg);
-  if (!(pos_top && neg_bot) && !(pos_bot && neg_top)) return false;
+  //int road_pos = trk_pos->getTriggerRoad();
+  //int road_neg = trk_neg->getTriggerRoad();
+  //bool pos_top = rs.PosTop()->FindRoad(road_pos);
+  //bool pos_bot = rs.PosBot()->FindRoad(road_pos);
+  //bool neg_top = rs.NegTop()->FindRoad(road_neg);
+  //bool neg_bot = rs.NegBot()->FindRoad(road_neg);
+  //if (!(pos_top && neg_bot) && !(pos_bot && neg_top)) return false;
   
   double z_pos = trk_pos->get_pos_vtx().Z();
   double z_neg = trk_neg->get_pos_vtx().Z();
@@ -207,7 +207,7 @@ bool SelectDimuon(SRecDimuon* dim, SRecTrack* trk_pos, SRecTrack* trk_neg)
 
   if (trk_pos->get_mom_st1().Y() * trk_neg->get_mom_st1().Y() > 0) return false;
 
-  //if (trk_pos->get_pos_st1().X() > 25 || trk_neg->get_pos_st1().X() > 25) return false;
+  if (trk_pos->get_pos_st1().X() > 25 || trk_neg->get_pos_st1().X() > 25) return false;
 
   return true;
 }
