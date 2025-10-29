@@ -1,0 +1,6 @@
+*.root
+*.log
+*.tmp
+*.swp
+build/
+inst/
