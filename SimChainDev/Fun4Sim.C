@@ -36,25 +36,20 @@ int Fun4Sim(const int nevent = 10)
   const double target_z = (7.9-target_l)/2.; //cm
   const int use_g4steps = 1;
 
-  const double FMAGSTR = -1.044;
-  const double KMAGSTR = -1.025;
-
  //! Particle generator flag.  Only one of these must be true.
   const bool gen_pythia8  = true;
   const bool gen_cosmic   = false;
   const bool gen_particle = false;
   const bool read_hepmc   = false;
-  const bool gen_e906dim = false; // cf. SQPrimaryParticleGen
+  const bool gen_e906dim  = false; // cf. SQPrimaryParticleGen
 
   //! Use SQPrimaryVertexGen or not.
   const bool SQ_vtx_gen = true;
   
   recoConsts *rc = recoConsts::instance();
-  rc->set_IntFlag("RUNNUMBER", 5433); /// The geometry is selected based on run number.
-  rc->set_DoubleFlag("FMAGSTR", FMAGSTR);
-  rc->set_DoubleFlag("KMAGSTR", KMAGSTR);
-  rc->set_DoubleFlag("SIGX_BEAM", 0.3);
-  rc->set_DoubleFlag("SIGY_BEAM", 0.3);
+  rc->init(5433); // Initialize the geometry, the alignment, the reco config, etc. based on run ID.
+  //rc->set_DoubleFlag("FMAGSTR", -1.044);
+  //rc->set_DoubleFlag("KMAGSTR", -1.025);
   if(gen_cosmic) {
     rc->init("cosmic");
     rc->set_BoolFlag("COARSE_MODE", true);
@@ -63,8 +58,8 @@ int Fun4Sim(const int nevent = 10)
   }
   if(SQ_vtx_gen) { // cf. SQPrimaryVertexGen
     rc->set_CharFlag("VTX_GEN_MATERIAL_MODE", "Target"); // All, Target, Dump, TargetDumpGap or Manual
-    //rc->set_DoubleFlag("VTX_GEN_Z_START",  50.0); // For "Manual"
-    //rc->set_DoubleFlag("VTX_GEN_Z_STOP" , 100.0); // For "Manual"
+    //rc->set_DoubleFlag("VTX_GEN_Z_START",  50.0); // Used only in case of "Manual"
+    //rc->set_DoubleFlag("VTX_GEN_Z_STOP" , 100.0); // used only in case of  "Manual"
   }
   rc->Print();
 
@@ -79,7 +74,6 @@ int Fun4Sim(const int nevent = 10)
   //////////////////////////////////////////
   Fun4AllServer *se = Fun4AllServer::instance();
   se->Verbosity(0);
-
 
   // pythia8
   if(gen_pythia8) {    
@@ -134,13 +128,9 @@ int Fun4Sim(const int nevent = 10)
       genp->set_vertex_size_function(PHG4SimpleEventGenerator::Uniform);
       genp->set_vertex_size_parameters(0.0, 0.0);
     }
-    if(FMAGSTR>0)
-      //genp->set_pxpypz_range(0,6, -6,6, 10,100);
-      genp->set_pxpypz_range(-3,6, -3,3, 10,100);
-    else
-      //genp->set_pxpypz_range(-6,0, -6,6, 10,100);
-      genp->set_pxpypz_range(-6,3, -3,3, 10,100);
-
+    double fmag = rc->get_DoubleFlag("FMAGSTR");
+    if (fmag > 0) genp->set_pxpypz_range(-3,6, -3,3, 10,100);
+    else          genp->set_pxpypz_range(-6,3, -3,3, 10,100);
 
     genp->Verbosity(0);
     se->registerSubsystem(genp);
@@ -160,12 +150,9 @@ int Fun4Sim(const int nevent = 10)
       genm->set_vertex_size_function(PHG4SimpleEventGenerator::Uniform);
       genm->set_vertex_size_parameters(0.0, 0.0);
     }
-    if(FMAGSTR>0)
-      //genm->set_pxpypz_range(-6,0, -6,6, 10,100);
-      genm->set_pxpypz_range(-6,3, -3,3, 10,100);
-    else
-      //genm->set_pxpypz_range(0,6, -6,6, 10,100);
-      genm->set_pxpypz_range(-3,6, -3,3, 10,100);
+    double fmag = rc->get_DoubleFlag("FMAGSTR");
+    if (fmag > 0) genm->set_pxpypz_range(-6,3, -3,3, 10,100);
+    else          genm->set_pxpypz_range(-3,6, -3,3, 10,100);
 
     genm->Verbosity(0);
     se->registerSubsystem(genm);
@@ -180,16 +167,16 @@ int Fun4Sim(const int nevent = 10)
     const bool Psip_gen = false;  
 
     if(drellyan_gen){
-      e906legacy->set_xfRange(0.1, 0.5); //[-1.,1.]
-      e906legacy->set_massRange(3.0, 10.0);
+      e906legacy->set_xfRange(-0.1, 0.9); //[-1.,1.]
+      e906legacy->set_massRange(1.0, 9.0); // (1.5, 9.0);
       e906legacy->enableDrellYanGen();
     }
     if(Psip_gen){ 
-      e906legacy->set_xfRange(0.1, 0.5); //[-1.,1.]
+      e906legacy->set_xfRange(0.2, 1.0); //[-1.,1.]
       e906legacy->enablePsipGen();
     }
     if(JPsi_gen){
-      e906legacy->set_xfRange(0.1, 0.5); //[-1.,1.]
+      e906legacy->set_xfRange(0.2, 1.0); //[-1.,1.]
       e906legacy->enableJPsiGen();
     }
     if(pythia_gen){ 
@@ -247,7 +234,7 @@ int Fun4Sim(const int nevent = 10)
 
   /// Save only events that are in the geometric acceptance.
   //SQGeomAcc* geom_acc = new SQGeomAcc();
-  //geom_acc->SetMuonMode(SQGeomAcc::PAIR); // PAIR, PAIR_TBBT, SINGLE, SINGLE_T, etc.
+  //geom_acc->SetMuonMode(SQGeomAcc::PAIR_TBBT); // PAIR, PAIR_TBBT, SINGLE, SINGLE_T, etc.
   //geom_acc->SetPlaneMode(SQGeomAcc::HODO_CHAM); // HODO, CHAM or HODO_CHAM
   //geom_acc->SetNumOfH1EdgeElementsExcluded(4); // Exclude 4 elements at H1 edges
   //se->registerSubsystem(geom_acc);
@@ -269,9 +256,9 @@ int Fun4Sim(const int nevent = 10)
   }
 
   // Trigger Emulator
-  DPTriggerAnalyzer* dptrigger = new DPTriggerAnalyzer();
-  dptrigger->set_road_set_file_name("$E1039_RESOURCE/trigger/trigger_67.txt");
-  se->registerSubsystem(dptrigger);
+  //DPTriggerAnalyzer* dptrigger = new DPTriggerAnalyzer();
+  //dptrigger->set_road_set_file_name("$E1039_RESOURCE/trigger/trigger_67.txt");
+  //se->registerSubsystem(dptrigger);
 
   // Event Filter
   //EvtFilter *evt_filter = new EvtFilter();
@@ -282,6 +269,7 @@ int Fun4Sim(const int nevent = 10)
   // Tracking module
   SQReco* reco = new SQReco();
   reco->Verbosity(0);
+  reco->set_legacy_rec_container(false); // default = true
   //reco->set_geom_file_name("support/geom.root"); //not needed as it's created on the fly
   reco->set_enable_KF(true);           //Kalman filter not needed for the track finding, disabling KF saves a lot of initialization time
   reco->setInputTy(SQReco::E1039);     //options are SQReco::E906 and SQReco::E1039
@@ -296,10 +284,8 @@ int Fun4Sim(const int nevent = 10)
   //reco->add_eval_list(1);             //include station-2 in eval tree for debugging
   se->registerSubsystem(reco);
 
-  VertexFit* vertexing = new VertexFit();
-  //vertexing->enable_fit_target_center(); //uncomment if you want to fit in the target center
-  //vertexing->enableOptimization(); //uncomment if you want to fit according to new optimization formula
-  se->registerSubsystem(vertexing);
+  SQVertexing* vtx = new SQVertexing();
+  se->registerSubsystem(vtx);
 
   //// Trim minor data nodes (to reduce the DST file size)
   //se->registerSubsystem(new SimDstTrimmer());
