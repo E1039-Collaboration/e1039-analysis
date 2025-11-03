@@ -15,6 +15,11 @@ EventData::EventData()
   ;
 }
 
+RoadData::RoadData()
+{
+  ;
+}
+
 DimuonData::DimuonData() 
   : road_pos(0)
   , road_neg(0)

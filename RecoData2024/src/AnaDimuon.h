@@ -18,6 +18,9 @@ class AnaDimuon: public SubsysReco {
   SQTrackVector*  m_sq_trk_vec;
   SQDimuonVector* m_sq_dim_vec;
 
+  std::string m_node_prefix;
+  std::string m_mode;
+  bool m_output_tree;
   std::string m_file_name;
   TFile*      m_file;
   TTree*      m_tree;
@@ -27,15 +30,23 @@ class AnaDimuon: public SubsysReco {
   UtilTrigger::TrigRoadset m_rs;
   
  public:
-  AnaDimuon(const std::string& name="AnaDimuon");
+  AnaDimuon(const std::string& name="AnaDimuonPM", const std::string& mode="PM");
   virtual ~AnaDimuon();
   int Init(PHCompositeNode *topNode);
   int InitRun(PHCompositeNode *topNode);
   int process_event(PHCompositeNode *topNode);
   int End(PHCompositeNode *topNode);
-  void SetOutputFileName(const std::string name) { m_file_name = name; }
 
-  static void AnalyzeTree(TChain* tree);
+  //void SetOutputFileName(const std::string name) { m_file_name = name; }
+  std::string GetOutputFileName() const   { return m_file_name; }
+
+  void SetNodePrefix(const std::string name) { m_node_prefix = name; }
+  std::string GetNodePrefix() const   { return m_node_prefix; }
+  
+  void EnableTreeOutput() { m_output_tree = true; }
+  void DisableTreeOutput() { m_output_tree = false; }
+
+  void AnalyzeTree(TChain* tree, const bool road_match=true);
 };
 
 #endif // _ANA_DIMUON__H_

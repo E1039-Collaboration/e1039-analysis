@@ -3,6 +3,7 @@ DIR_MACRO=$(dirname $(readlink -f $BASH_SOURCE))
 DIR_DST=/pnfs/e1039/persistent/users/kenichi/dst
 
 JOB_NAME=reco
+FN_LIST=list_run_spill.txt
 DO_OVERWRITE=no
 USE_GRID=no
 FORCE_PNFS=no
@@ -11,9 +12,10 @@ JOB_E=1 # 0 = All available signal and/or embedding files
 N_EVT=0 # 0 = All events in each signal+embedding file
 N_JOB_MAX=0 # N of max jobs at a time.  0 = no limit
 OPTIND=1
-while getopts ":n:ogpj:e:m:" OPT ; do
+while getopts ":n:l:ogpj:e:m:" OPT ; do
     case $OPT in
 	n ) JOB_NAME=$OPTARG ;;
+	l ) FN_LIST=$OPTARG ;;
 	o ) DO_OVERWRITE=yes ;;
         g ) USE_GRID=yes ;;
 	p ) FORCE_PNFS=yes ;;
@@ -24,7 +26,6 @@ while getopts ":n:ogpj:e:m:" OPT ; do
 done
 shift $((OPTIND - 1))
 
-FN_LIST=list_run_spill.txt
 declare -a LIST_RUN
 declare -a LIST_SPILL
 while read RUN SPILL ; do
@@ -40,8 +41,9 @@ fi
 test -z $JOB_B || test $JOB_B -lt 1      && JOB_B=1
 test -z $JOB_E || test $JOB_E -gt $N_DAT && JOB_E=$N_DAT
 
-echo "N_DAT        = $N_DAT"
 echo "JOB_NAME     = $JOB_NAME"
+echo "FN_LIST      = $FN_LIST"
+echo "N_DAT        = $N_DAT"
 echo "DO_OVERWRITE = $DO_OVERWRITE"
 echo "USE_GRID     = $USE_GRID"
 echo "FORCE_PNFS   = $FORCE_PNFS"
@@ -110,7 +112,7 @@ for (( JOB_I = $JOB_B; JOB_I <= $JOB_E; JOB_I++ )) ; do
 	CMD="/exp/seaquest/app/software/script/jobsub_submit_spinquest.sh"
 	#CMD+=" --resource-provides=usage_model=DEDICATED,OPPORTUNISTIC"
 	#CMD+=" --expected-lifetime='medium'" # medium=8h, short=3h, long=23h
-	CMD+=" --expected-lifetime='long'"
+	CMD+=" --expected-lifetime='96h'"
 	CMD+=" -L $DIR_WORK_JOB/log_gridrun.txt"
 	CMD+=" -f $DIR_WORK/input.tar.gz"
 	CMD+=" -f $DIR_DST/run_$RUN6/$FN_IN"

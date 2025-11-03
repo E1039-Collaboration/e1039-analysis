@@ -1,40 +1,43 @@
-#ifndef _ANA_TRACK__H_
-#define _ANA_TRACK__H_
+#ifndef _ANA_TRIGGER_AND_TRACK__H_
+#define _ANA_TRIGGER_AND_TRACK__H_
 #include <fun4all/SubsysReco.h>
+#include <UtilAna/TrigRoadset.h>
 #include "TreeData.h"
 class TFile;
-class TH2;
 class TTree;
 class TChain;
 class SQEvent;
 class SQHitVector;
 class SQTrackVector;
+class SQDimuonVector;
 
-/// An example class to analyze hodoscope hits in E1039 DST file.
-class AnaTrack: public SubsysReco {
+/// An example class to analyze dimuons.
+class AnaTriggerAndTrack: public SubsysReco {
   SQEvent*     m_sq_evt;
   SQHitVector* m_sq_hit_vec;
   SQTrackVector*  m_sq_trk_vec;
+  SQDimuonVector* m_sq_dim_vec;
 
   std::string m_file_name;
   TFile*      m_file;
   TTree*      m_tree;
   EventData   m_evt;
+  RoadData    m_road;
   TrackList   m_trk_list;
+  //DimuonList  m_dim_list;
+
+  UtilTrigger::TrigRoadset m_rs;
   
  public:
-  AnaTrack(const std::string& name="AnaTrack");
-  virtual ~AnaTrack();
+  AnaTriggerAndTrack(const std::string& name="AnaTriggerAndTrack");
+  virtual ~AnaTriggerAndTrack();
   int Init(PHCompositeNode *topNode);
   int InitRun(PHCompositeNode *topNode);
   int process_event(PHCompositeNode *topNode);
   int End(PHCompositeNode *topNode);
-  
-  //void SetOutputFileName(const std::string name) { m_file_name = name; }
-  std::string GetOutputFileName() const   { return m_file_name; }
-  
+  void SetOutputFileName(const std::string name) { m_file_name = name; }
+
   static void AnalyzeTree(TChain* tree);
-  static void DrawHistIn1D(TH2* h2, const std::string label, const std::string dir_out);
 };
 
-#endif // _ANA_TRACK__H_
+#endif // _ANA_TRIGGER_AND_TRACK__H_

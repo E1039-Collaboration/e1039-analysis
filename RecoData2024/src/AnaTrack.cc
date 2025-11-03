@@ -136,6 +136,7 @@ void AnaTrack::AnalyzeTree(TChain* tree)
   TH2* h2_px_vtx = new TH2D("h2_px_vtx", ";Track p_{x} (GeV) @ Vertex;Charge;", 100, -5,   5,  2, -2, 2);
   TH2* h2_py_vtx = new TH2D("h2_py_vtx", ";Track p_{y} (GeV) @ Vertex;Charge;", 100, -5,   5,  2, -2, 2);
   TH2* h2_pz_vtx = new TH2D("h2_pz_vtx", ";Track p_{z} (GeV) @ Vertex;Charge;", 100,  0, 100,  2, -2, 2);
+  TH2* h2_pT_vtx = new TH2D("h2_pT_vtx", ";Track p_{T} (GeV) @ Vertex;Charge;", 100,  0,   5,  2, -2, 2);
 
   TH2* h2_x_st1  = new TH2D("h2_x_st1" , ";Track x (cm) @ St 1;Charge;",    100,  -50,  50,  2, -2, 2);
   TH2* h2_y_st1  = new TH2D("h2_y_st1" , ";Track y (cm) @ St 1;Charge;",    100,  -50,  50,  2, -2, 2);
@@ -162,14 +163,18 @@ void AnaTrack::AnalyzeTree(TChain* tree)
   int n_ent = tree->GetEntries();
   cout << "N of entries = " << n_ent << endl;
   for (int i_ent = 0; i_ent < n_ent; i_ent++) {
-    if ((i_ent+1) % (n_ent/10) == 0) cout << "  " << 10*(i_ent+1)/(n_ent/10) << "%" << flush;
+    if (n_ent > 10 && (i_ent+1) % (n_ent/10) == 0) cout << "  " << 10*(i_ent+1)/(n_ent/10) << "%" << flush;
     tree->GetEntry(i_ent);
+    
+    //if (evt->run_id < 6111 || evt->run_id > 6118) continue; // Range #1
+    //if (evt->run_id < 6135 || evt->run_id > 6139) continue; // Range #2
+    //if (evt->run_id < 6149 || evt->run_id > 6155) continue; // Range #3
 
     //if (! (evt->fpga_bits & 0x1)) continue;
     //if (! (evt->fpga_bits & 0x4)) continue;
     if (! (evt->fpga_bits & 0x8)) continue;
-    //if (! (evt->nim_bits & 0x4)) continue;
-    
+    //if (! (evt->nim_bits & 0x1)) continue;
+
     for (auto it = trk_list->begin(); it != trk_list->end(); it++) {
       TrackData* td = &(*it);
       int charge = td->charge;
@@ -186,7 +191,10 @@ void AnaTrack::AnalyzeTree(TChain* tree)
       TLorentzVector* mom_st1 = &td->mom_st1;
       TVector3*       pos_st3 = &td->pos_st3;
       TLorentzVector* mom_st3 = &td->mom_st3;
-
+      if (pos_vtx->Z() < -600 || pos_vtx->Z() >  100 ||
+          mom_vtx->X() <   -3 || mom_vtx->X() >    3 ||
+          mom_vtx->Z() <    5 || mom_vtx->Z() >  100   ) continue;
+      
       h2_nhit    ->Fill(nhit, charge);
       h2_chi2    ->Fill(chi2, charge);
       h2_chi2_tgt->Fill(chi2_tgt, charge);
@@ -199,6 +207,7 @@ void AnaTrack::AnalyzeTree(TChain* tree)
       h2_px_vtx  ->Fill(mom_vtx->X(), charge);
       h2_py_vtx  ->Fill(mom_vtx->Y(), charge);
       h2_pz_vtx  ->Fill(mom_vtx->Z(), charge);
+      h2_pT_vtx  ->Fill(mom_vtx->Pt(),charge);
 
       h2_x_st1   ->Fill(pos_st1->X(), charge);
       h2_y_st1   ->Fill(pos_st1->Y(), charge);
@@ -228,6 +237,7 @@ void AnaTrack::AnalyzeTree(TChain* tree)
   DrawHistIn1D(h2_px_vtx, "px_vtx", dir_out);
   DrawHistIn1D(h2_py_vtx, "py_vtx", dir_out);
   DrawHistIn1D(h2_pz_vtx, "pz_vtx", dir_out);
+  DrawHistIn1D(h2_pT_vtx, "pT_vtx", dir_out);
 
   DrawHistIn1D(h2_x_st1 ,  "x_st1", dir_out);
   DrawHistIn1D(h2_y_st1 ,  "y_st1", dir_out);

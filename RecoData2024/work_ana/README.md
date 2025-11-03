@@ -51,6 +51,11 @@ root -b AnaEventTree.C
 display result/h1_m.png &
 ```
 
+You can find the index of a run, which can be used for `-j` by this command:
+```
+cut -f 1 list_run_spill.txt | uniq | less -N
+```
+
 
 ## Analysis Condition
 

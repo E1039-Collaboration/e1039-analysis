@@ -20,6 +20,18 @@ struct EventData {
   ClassDef(EventData, 1);
 };
 
+struct RoadData {
+  std::vector<int> pos_top;
+  std::vector<int> pos_bot;
+  std::vector<int> neg_top;
+  std::vector<int> neg_bot;
+
+  RoadData();
+  virtual ~RoadData() {;}
+  ClassDef(RoadData, 1);
+};
+
+
 struct DimuonData {
   int            road_pos;
   int            road_neg;
@@ -59,7 +71,8 @@ typedef std::vector<DimuonData> DimuonList;
 
 struct TrackData {
   short          charge;
-  int            road;
+  int            road; // road_id
+  short          road_idx;
   short          n_hits;
   double         chisq ;
   double         chisq_target;

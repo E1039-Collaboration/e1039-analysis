@@ -11,8 +11,8 @@ int Fun4All(const int run_id, const int spill_id, const string DST_in, const str
   rc->set_BoolFlag("COARSE_MODE", false);
   rc->set_BoolFlag("REQUIRE_MUID", false);
   rc->set_CharFlag("HIT_MASK_MODE", "X");
-    
-  rc->set_CharFlag("AlignmentMille", "config/align_mille_v10_a.txt");
+
+  rc->set_CharFlag("AlignmentMille", "$E1039_RESOURCE/alignment/run0/align_mille_v10_a.txt");
   rc->set_CharFlag("AlignmentHodo", "");
   rc->set_CharFlag("AlignmentProp", "");
   rc->set_CharFlag("Calibration", "");
@@ -35,14 +35,14 @@ int Fun4All(const int run_id, const int spill_id, const string DST_in, const str
   cal_ele_pos->CalibTriggerHit(false);
   se->registerSubsystem(cal_ele_pos);
   
-  //CalibHodoInTime* cal_hodo = new CalibHodoInTime();
-  //cal_hodo->SkipCalibration();
-  //cal_hodo->DeleteOutTimeHit();
-  //se->registerSubsystem(cal_hodo);
+  CalibHodoInTime* cal_hodo = new CalibHodoInTime();
+  cal_hodo->SkipCalibration();
+  cal_hodo->DeleteOutTimeHit();
+  se->registerSubsystem(cal_hodo);
   
   CalibDriftDist* cal_dd = new CalibDriftDist();
   //cal_dd->Verbosity(999);
-  //cal_dd->DeleteOutTimeHit();
+  cal_dd->DeleteOutTimeHit();
   se->registerSubsystem(cal_dd);
 
   SQReco* reco = new SQReco();
@@ -65,7 +65,7 @@ int Fun4All(const int run_id, const int spill_id, const string DST_in, const str
   //vtx->set_single_retracking(true);
   se->registerSubsystem(vtx);
 
-  se->registerSubsystem(new SQVertexing("vtx_pm", +1, +1));
+  se->registerSubsystem(new SQVertexing("vtx_pp", +1, +1));
   se->registerSubsystem(new SQVertexing("vtx_mm", -1, -1));
   
   se->registerSubsystem(new AnaDimuon());

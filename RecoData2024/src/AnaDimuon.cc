@@ -21,17 +21,23 @@
 #include "AnaDimuon.h"
 using namespace std;
 
-AnaDimuon::AnaDimuon(const std::string& name)
+AnaDimuon::AnaDimuon(const std::string& name, const std::string& mode)
   : SubsysReco  (name)
   , m_sq_evt    (0)
   , m_sq_hit_vec(0)
   , m_sq_trk_vec(0)
   , m_sq_dim_vec(0)
-  , m_file_name ("output_PM.root")
+  , m_node_prefix("SQRecDimuonVector_")
+  , m_mode      (mode)
+  , m_output_tree(true)
   , m_file      (0)
   , m_tree      (0)
 {
-  ;
+  if (m_mode != "PM" && m_mode != "PP" && m_mode != "MM") {
+    cout << "AnaDimuon:  ERROR  Mode is not 'PM', 'PP' nor 'MM'.  Abort." << endl;
+    exit(1);
+  }
+  m_file_name = "output_" + m_mode + ".root";
 }
 
 AnaDimuon::~AnaDimuon()
@@ -47,25 +53,28 @@ int AnaDimuon::Init(PHCompositeNode* topNode)
 int AnaDimuon::InitRun(PHCompositeNode* topNode)
 {
   //GeomSvc* geom = GeomSvc::instance();
-
+  string node_name = m_node_prefix + m_mode;
+  
   m_sq_evt     = findNode::getClass<SQEvent       >(topNode, "SQEvent");
   m_sq_hit_vec = findNode::getClass<SQHitVector   >(topNode, "SQHitVector");
   m_sq_trk_vec = findNode::getClass<SQTrackVector >(topNode, "SQRecTrackVector");
-  m_sq_dim_vec = findNode::getClass<SQDimuonVector>(topNode, "SQRecDimuonVector_PM");
+  m_sq_dim_vec = findNode::getClass<SQDimuonVector>(topNode, node_name.c_str());
   if (!m_sq_evt || !m_sq_hit_vec || !m_sq_trk_vec || !m_sq_dim_vec) return Fun4AllReturnCodes::ABORTEVENT;
 
   m_file = new TFile(m_file_name.c_str(), "RECREATE");
-  m_tree = new TTree("tree", "Created by AnaDimuon");
-  m_tree->Branch("event"      , &m_evt);
-  m_tree->Branch("dimuon_list", &m_dim_list);
-
+  if (m_output_tree) {
+    m_tree = new TTree("tree", "Created by AnaDimuon");
+    m_tree->Branch("event"      , &m_evt);
+    m_tree->Branch("dimuon_list", &m_dim_list);
+  }
+  
   SQRun* sq_run = findNode::getClass<SQRun>(topNode, "SQRun");
   if (!sq_run) return Fun4AllReturnCodes::ABORTEVENT;
   int LBtop = sq_run->get_v1495_id(2);
   int LBbot = sq_run->get_v1495_id(3);
   int ret = m_rs.LoadConfig(LBtop, LBbot);
   if (ret != 0) {
-    cout << "!!WARNING!!  OnlMonTrigEP::InitRunOnlMon():  roadset.LoadConfig returned " << ret << ".\n";
+    cout << "!!WARNING!!  AnaDimuonLikeSign::InitRun():  roadset.LoadConfig returned " << ret << ".\n";
   }
   cout <<"Roadset " << m_rs.str(1) << endl;
 
@@ -119,12 +128,32 @@ int AnaDimuon::process_event(PHCompositeNode* topNode)
     SRecTrack* trk_pos = dynamic_cast<SRecTrack*>(m_sq_trk_vec->at(trk_id_pos));
     SRecTrack* trk_neg = dynamic_cast<SRecTrack*>(m_sq_trk_vec->at(trk_id_neg));
 
+    UtilTrigger::TrigRoads* roads_pos_top;
+    UtilTrigger::TrigRoads* roads_pos_bot;
+    UtilTrigger::TrigRoads* roads_neg_top;
+    UtilTrigger::TrigRoads* roads_neg_bot;
+    if (m_mode == "PM") {
+      roads_pos_top = m_rs.PosTop();
+      roads_pos_bot = m_rs.PosBot();
+      roads_neg_top = m_rs.NegTop();
+      roads_neg_bot = m_rs.NegBot();
+    } else if (m_mode == "PP") {
+      roads_pos_top = m_rs.PosTop();
+      roads_pos_bot = m_rs.PosBot();
+      roads_neg_top = m_rs.PosTop();
+      roads_neg_bot = m_rs.PosBot();
+    } else { // "MM"
+      roads_pos_top = m_rs.NegTop();
+      roads_pos_bot = m_rs.NegBot();
+      roads_neg_top = m_rs.NegTop();
+      roads_neg_bot = m_rs.NegBot();
+    }
     int road_pos = trk_pos->getTriggerRoad();
     int road_neg = trk_neg->getTriggerRoad();
-    bool pos_top = m_rs.PosTop()->FindRoad(road_pos);
-    bool pos_bot = m_rs.PosBot()->FindRoad(road_pos);
-    bool neg_top = m_rs.NegTop()->FindRoad(road_neg);
-    bool neg_bot = m_rs.NegBot()->FindRoad(road_neg);
+    bool pos_top = roads_pos_top->FindRoad(road_pos);
+    bool pos_bot = roads_pos_bot->FindRoad(road_pos);
+    bool neg_top = roads_neg_top->FindRoad(road_neg);
+    bool neg_bot = roads_neg_bot->FindRoad(road_neg);
     //cout << "T " << road_pos << " " << road_neg << " " << pos_top << pos_bot << neg_top << neg_bot << endl;
 
     DimuonData dd;
@@ -163,7 +192,7 @@ int AnaDimuon::process_event(PHCompositeNode* topNode)
     m_dim_list.push_back(dd);
   }
   
-  m_tree->Fill();
+  if (m_output_tree) m_tree->Fill();
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
@@ -175,9 +204,9 @@ int AnaDimuon::End(PHCompositeNode* topNode)
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
-void AnaDimuon::AnalyzeTree(TChain* tree)
+void AnaDimuon::AnalyzeTree(TChain* tree, const bool road_match)
 {
-  string dir_out = "result/PM"; //  + label;
+  string dir_out = "result/" + m_mode;
   cout << "N of trees = " << tree->GetNtrees() << endl;
   gSystem->mkdir(dir_out.c_str(), true);
   ofstream ofs(dir_out + "/result.txt");
@@ -190,13 +219,11 @@ void AnaDimuon::AnalyzeTree(TChain* tree)
   TH1* h1_D3m = new TH1D("h1_D3m", ";D3m occupancy;N of events", 300, -0.5, 299.5);
   
   TH1* h1_nhit_pos = new TH1D("h1_nhit_pos", "#mu^{+};N of hits/track;", 6, 12.5, 18.5);
-  TH1* h1_chi2_pos = new TH1D("h1_chi2_pos", "#mu^{+};Track #chi^{2};", 100, 0, 2);
+  TH1* h1_chi2_pos = new TH1D("h1_chi2_pos", "#mu^{+};Track #chi^{2};", 100, 0, 10);
   TH1* h1_z_pos    = new TH1D("h1_z_pos"   , "#mu^{+};Track z (cm);"  , 100, -700, 300);
+  TH1* h1_px_pos   = new TH1D("h1_px_pos"  , "#mu^{+};Track p_{x} (GeV);", 100, -5, 5);
+  TH1* h1_py_pos   = new TH1D("h1_py_pos"  , "#mu^{+};Track p_{y} (GeV);", 100, -5, 5);
   TH1* h1_pz_pos   = new TH1D("h1_pz_pos"  , "#mu^{+};Track p_{z} (GeV);", 100, 0, 100);
-  //TH1* h1_x_t_pos  = new TH1D("h1_x_t_pos", "#mu^{+};Track x (cm) @ Target;", 100, -50, 50);
-  //TH1* h1_y_t_pos  = new TH1D("h1_y_t_pos", "#mu^{+};Track y (cm) @ Target;", 100, -25, 25);
-  //TH1* h1_x_d_pos  = new TH1D("h1_x_d_pos", "#mu^{+};Track x (cm) @ Dump;"  , 100, -10, 10);
-  //TH1* h1_y_d_pos  = new TH1D("h1_y_d_pos", "#mu^{+};Track y (cm) @ Dump;"  , 100, -10, 10);
   
   TH1* h1_chi2_tgt_pos = new TH1D("h1_chi2_tgt_pos", "#mu^{+};Track #chi^{2} at target;"  , 100, 0, 10);
   TH1* h1_chi2_dum_pos = new TH1D("h1_chi2_dum_pos", "#mu^{+};Track #chi^{2} at dump;"    , 100, 0, 10);
@@ -205,13 +232,11 @@ void AnaDimuon::AnalyzeTree(TChain* tree)
   TH1* h1_chi2_tmu_pos = new TH1D("h1_chi2_tmu_pos", "#mu^{+};#chi^{2}_{Target} - #chi^{2}_{Upstream};", 100, -10, 10);
   
   TH1* h1_nhit_neg = new TH1D("h1_nhit_neg", "#mu^{-};N of hits/track;", 6, 12.5, 18.5);
-  TH1* h1_chi2_neg = new TH1D("h1_chi2_neg", "#mu^{-};Track #chi^{2};", 100, 0, 2);
+  TH1* h1_chi2_neg = new TH1D("h1_chi2_neg", "#mu^{-};Track #chi^{2};", 100, 0, 10);
   TH1* h1_z_neg    = new TH1D("h1_z_neg"   , "#mu^{-};Track z (cm);", 100, -700, 300);
+  TH1* h1_px_neg   = new TH1D("h1_px_neg"  , "#mu^{-};Track p_{x} (GeV);", 100, -5, 5);
+  TH1* h1_py_neg   = new TH1D("h1_py_neg"  , "#mu^{-};Track p_{y} (GeV);", 100, -5, 5);
   TH1* h1_pz_neg   = new TH1D("h1_pz_neg"  , "#mu^{-};Track p_{z} (GeV);", 100, 0, 100);
-  //TH1* h1_x_t_neg  = new TH1D("h1_x_t_neg", "#mu^{-};Track x (cm) @ Target;", 100, -50, 50);
-  //TH1* h1_y_t_neg  = new TH1D("h1_y_t_neg", "#mu^{-};Track y (cm) @ Target;", 100, -25, 25);
-  //TH1* h1_x_d_neg  = new TH1D("h1_x_d_neg", "#mu^{-};Track x (cm) @ Dump;"  , 100, -10, 10);
-  //TH1* h1_y_d_neg  = new TH1D("h1_y_d_neg", "#mu^{-};Track y (cm) @ Dump;"  , 100, -10, 10);
 
   TH1* h1_chi2_tgt_neg = new TH1D("h1_chi2_tgt_neg", "#mu^{-};Track #chi^{2} at target;"  , 100, 0, 10);
   TH1* h1_chi2_dum_neg = new TH1D("h1_chi2_dum_neg", "#mu^{-};Track #chi^{2} at dump;"    , 100, 0, 10);
@@ -233,6 +258,8 @@ void AnaDimuon::AnalyzeTree(TChain* tree)
   TH1* h1_m_sel   = new TH1D("h1_m_sel"  , ";Dimuon mass (GeV);", 100, 0, 10);
 
   TH1* h1_dz_tgt  = new TH1D("h1_dz_tgt" , ";Dimuon z (cm);"     , 100, -700, 300);
+  TH1* h1_dpx_tgt = new TH1D("h1_dpx_tgt", ";Dimuon p_{x} (GeV);", 100, -5, 5);
+  TH1* h1_dpy_tgt = new TH1D("h1_dpy_tgt", ";Dimuon p_{y} (GeV);", 100, -5, 5);
   TH1* h1_dpz_tgt = new TH1D("h1_dpz_tgt", ";Dimuon p_{z} (GeV);", 100, 30, 130);
   TH1* h1_m_tgt   = new TH1D("h1_m_tgt"  , ";Dimuon mass (GeV);" , 100, 0, 10);
 
@@ -244,6 +271,8 @@ void AnaDimuon::AnalyzeTree(TChain* tree)
   tree->SetBranchAddress("event"      , &evt);
   tree->SetBranchAddress("dimuon_list", &dim_list);
 
+  int fpga_bits_req = (m_mode == "PM"  ?  0x1  :  0x4);
+  
   int n_ent = tree->GetEntries();
   cout << "N of entries = " << n_ent << endl;
   for (int i_ent = 0; i_ent < n_ent; i_ent++) {
@@ -251,8 +280,8 @@ void AnaDimuon::AnalyzeTree(TChain* tree)
     tree->GetEntry(i_ent);
     //ofs << evt->run_id << " " << evt->spill_id << " " << evt->event_id << " " << evt->D1 << " " << evt->D2 << " " << evt->D3p << " " << evt->D3m << endl;
 
-    //if (evt->run_id != 6155 || evt->spill_id != 1941910) continue;
-    if (! (evt->fpga_bits & 0x1)) continue;
+    /// Require FPGA1 bit for PM or FPGA3 bit for PP/PM.
+    if (! (evt->fpga_bits & fpga_bits_req)) continue;
     //if (! (evt->nim_bits & 0x4)) continue;
 
     h1_D1 ->Fill(evt->D1 );
@@ -271,59 +300,50 @@ void AnaDimuon::AnalyzeTree(TChain* tree)
       double chi2_tgt_neg = dd->chisq_target_neg;
       double chi2_dum_neg = dd->chisq_dump_neg;
       double chi2_ups_neg = dd->chisq_upstream_neg;
-      
-      ofs << evt->run_id << " " << evt->spill_id << " " << evt->event_id << " "
-          << evt->D1 << " " << evt->D2 << " " << evt->D3p << " " << evt->D3m << " "
-          << dd->pos.Z() << " " << dd->mom.M() << endl;
-      //ofs << chi2_tgt_pos << " " << chi2_dum_pos << " " << chi2_ups_pos << " " << chi2_tgt_neg << " " << chi2_dum_neg << " " << chi2_ups_neg << endl;
 
+      if (dd->pos    .Z() < -690 ||
+          dd->pos_pos.Z() < -690 || dd->pos_neg.Z() < -690 ||
+          dd->mom_pos.Z() <    5 || dd->mom_neg.Z() <    5   ) continue;
       //if (dd->n_hits_pos < 14 || dd->n_hits_neg < 14) continue;
-      
+      //if (dd->n_hits_pos < 15 || dd->n_hits_neg < 15) continue;
+      if (fabs(trk_sep) > 200) continue;
+
+      if (road_match) {
+        bool top_bot = dd->pos_top && dd->neg_bot;
+        bool bot_top = dd->pos_bot && dd->neg_top;
+        if (!top_bot && !bot_top) continue;
+      }
+
+      if (chi2_tgt_pos < 0 || chi2_dum_pos < 0 || chi2_ups_pos < 0 ||
+          chi2_tgt_pos - chi2_dum_pos > 0 || chi2_tgt_pos - chi2_ups_pos > 0) continue;
+      if (chi2_tgt_neg < 0 || chi2_dum_neg < 0 || chi2_ups_neg < 0 ||
+          chi2_tgt_neg - chi2_dum_neg > 0 || chi2_tgt_neg - chi2_ups_neg > 0) continue;
+
       h1_nhit_pos->Fill(dd->n_hits_pos);
       h1_chi2_pos->Fill(dd->chisq_pos);
       h1_z_pos   ->Fill(dd->pos_pos.Z());
+      h1_px_pos  ->Fill(dd->mom_pos.X());
+      h1_py_pos  ->Fill(dd->mom_pos.Y());
       h1_pz_pos  ->Fill(dd->mom_pos.Z());
 
       h1_nhit_neg->Fill(dd->n_hits_neg);
       h1_chi2_neg->Fill(dd->chisq_neg);
       h1_z_neg   ->Fill(dd->pos_neg.Z());
+      h1_px_neg  ->Fill(dd->mom_neg.X());
+      h1_py_neg  ->Fill(dd->mom_neg.Y());
       h1_pz_neg  ->Fill(dd->mom_neg.Z());
-
-      if (dd->pos_pos.Z() < -690 || dd->pos_neg.Z() < -690) continue;
-      //if (dd->n_hits_pos < 15 || dd->n_hits_neg < 15) continue;
-      //if (fabs(trk_sep) > 200) continue;
-      
-      //bool top_bot = dd->pos_top && dd->neg_bot;
-      //bool bot_top = dd->pos_bot && dd->neg_top;
-      //if (!top_bot && !bot_top) continue;
       
       h1_chi2_tgt_pos->Fill(chi2_tgt_pos);
       h1_chi2_dum_pos->Fill(chi2_dum_pos);
       h1_chi2_ups_pos->Fill(chi2_ups_pos);
       h1_chi2_tmd_pos->Fill(chi2_tgt_pos - chi2_dum_pos);
       h1_chi2_tmu_pos->Fill(chi2_tgt_pos - chi2_ups_pos);
-      //double x_t_pos = dd->pos_target_pos.X();
-      //double y_t_pos = dd->pos_target_pos.Y();
-      //double x_d_pos = dd->pos_dump_pos.X();
-      //double y_d_pos = dd->pos_dump_pos.Y();      
-      //h1_x_t_pos->Fill(x_t_pos);
-      //h1_y_t_pos->Fill(y_t_pos);
-      //h1_x_d_pos->Fill(x_d_pos);
-      //h1_y_d_pos->Fill(y_d_pos);
 
       h1_chi2_tgt_neg->Fill(chi2_tgt_neg);
       h1_chi2_dum_neg->Fill(chi2_dum_neg);
       h1_chi2_ups_neg->Fill(chi2_ups_neg);
       h1_chi2_tmd_neg->Fill(chi2_tgt_neg - chi2_dum_neg);
       h1_chi2_tmu_neg->Fill(chi2_tgt_neg - chi2_ups_neg);
-      //double x_t_neg = dd->pos_target_neg.X();
-      //double y_t_neg = dd->pos_target_neg.Y();
-      //double x_d_neg = dd->pos_dump_neg.X();
-      //double y_d_neg = dd->pos_dump_neg.Y();      
-      //h1_x_t_neg->Fill(x_t_neg);
-      //h1_y_t_neg->Fill(y_t_neg);
-      //h1_x_d_neg->Fill(x_d_neg);
-      //h1_y_d_neg->Fill(y_d_neg);
       
       h1_dx     ->Fill(dd->pos.X());
       h1_dy     ->Fill(dd->pos.Y());
@@ -334,22 +354,13 @@ void AnaDimuon::AnalyzeTree(TChain* tree)
       h1_m      ->Fill(dd->mom.M());
       h1_trk_sep->Fill(trk_sep);
       
-      if (chi2_tgt_pos < 0 || chi2_dum_pos < 0 || chi2_ups_pos < 0 ||
-          chi2_tgt_pos - chi2_dum_pos > 0 || chi2_tgt_pos - chi2_ups_pos > 0) continue;
-      if (chi2_tgt_neg < 0 || chi2_dum_neg < 0 || chi2_ups_neg < 0 ||
-          chi2_tgt_neg - chi2_dum_neg > 0 || chi2_tgt_neg - chi2_ups_neg > 0) continue;
-
-      //double r_t_pos = sqrt(x_t_pos*x_t_pos + y_t_pos*y_t_pos);
-      //double r_d_pos = sqrt(x_d_pos*x_d_pos + y_d_pos*y_d_pos);
-      //double r_t_neg = sqrt(x_t_neg*x_t_neg + y_t_neg*y_t_neg);
-      //double r_d_neg = sqrt(x_d_neg*x_d_neg + y_d_neg*y_d_neg);
-      //if (r_t_pos >= r_d_pos || r_t_neg >= r_d_neg) continue;
-      
       h1_dz_sel ->Fill(dd->pos.Z());
       h1_dpz_sel->Fill(dd->mom.Z());
       h1_m_sel  ->Fill(dd->mom.M());
       
       h1_dz_tgt ->Fill(dd->pos.Z());
+      h1_dpx_tgt->Fill(dd->mom_target.X());
+      h1_dpy_tgt->Fill(dd->mom_target.Y());
       h1_dpz_tgt->Fill(dd->mom_target.Z());
       h1_m_tgt  ->Fill(dd->mom_target.M());
     }
@@ -367,11 +378,9 @@ void AnaDimuon::AnalyzeTree(TChain* tree)
   h1_nhit_pos->Draw();  c1->SaveAs((dir_out+"/h1_nhit_pos.png").c_str());
   h1_chi2_pos->Draw();  c1->SaveAs((dir_out+"/h1_chi2_pos.png").c_str());
   h1_z_pos   ->Draw();  c1->SaveAs((dir_out+"/h1_z_pos.png").c_str());
+  h1_px_pos  ->Draw();  c1->SaveAs((dir_out+"/h1_px_pos.png").c_str());
+  h1_py_pos  ->Draw();  c1->SaveAs((dir_out+"/h1_py_pos.png").c_str());
   h1_pz_pos  ->Draw();  c1->SaveAs((dir_out+"/h1_pz_pos.png").c_str());
-  //h1_x_t_pos ->Draw();  c1->SaveAs(dir_out+"/h1_x_t_pos.png");  
-  //h1_y_t_pos ->Draw();  c1->SaveAs(dir_out+"/h1_y_t_pos.png");  
-  //h1_x_d_pos ->Draw();  c1->SaveAs(dir_out+"/h1_x_d_pos.png");  
-  //h1_y_d_pos ->Draw();  c1->SaveAs(dir_out+"/h1_y_d_pos.png");  
 
   h1_chi2_tgt_pos->Draw();  c1->SaveAs((dir_out+"/h1_chi2_tgt_pos.png").c_str());
   h1_chi2_dum_pos->Draw();  c1->SaveAs((dir_out+"/h1_chi2_dum_pos.png").c_str());
@@ -382,11 +391,9 @@ void AnaDimuon::AnalyzeTree(TChain* tree)
   h1_nhit_neg->Draw();  c1->SaveAs((dir_out+"/h1_nhit_neg.png").c_str());
   h1_chi2_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_neg.png").c_str());
   h1_z_neg   ->Draw();  c1->SaveAs((dir_out+"/h1_z_neg.png").c_str());
+  h1_px_neg  ->Draw();  c1->SaveAs((dir_out+"/h1_px_neg.png").c_str());
+  h1_py_neg  ->Draw();  c1->SaveAs((dir_out+"/h1_py_neg.png").c_str());
   h1_pz_neg  ->Draw();  c1->SaveAs((dir_out+"/h1_pz_neg.png").c_str());
-  //h1_x_t_neg ->Draw();  c1->SaveAs(dir_out+"/h1_x_t_neg.png");  
-  //h1_y_t_neg ->Draw();  c1->SaveAs(dir_out+"/h1_y_t_neg.png");  
-  //h1_x_d_neg ->Draw();  c1->SaveAs(dir_out+"/h1_x_d_neg.png");  
-  //h1_y_d_neg ->Draw();  c1->SaveAs(dir_out+"/h1_y_d_neg.png");  
 
   h1_chi2_tgt_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_tgt_neg.png").c_str());
   h1_chi2_dum_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_dum_neg.png").c_str());
@@ -425,11 +432,21 @@ void AnaDimuon::AnalyzeTree(TChain* tree)
   h1_dz_tgt->Draw();
   c1->SaveAs((dir_out+"/h1_dz_tgt.png").c_str());
 
+  h1_dpx_tgt->SetLineColor(kBlue);
+  h1_dpx_tgt->SetLineWidth(2);
+  h1_dpx_tgt->Draw();
+  c1->SaveAs((dir_out+"/h1_dpx_tgt.png").c_str());
+
+  h1_dpy_tgt->SetLineColor(kBlue);
+  h1_dpy_tgt->SetLineWidth(2);
+  h1_dpy_tgt->Draw();
+  c1->SaveAs((dir_out+"/h1_dpy_tgt.png").c_str());
+
   h1_dpz_tgt->SetLineColor(kBlue);
   h1_dpz_tgt->SetLineWidth(2);
   h1_dpz_tgt->Draw();
   c1->SaveAs((dir_out+"/h1_dpz_tgt.png").c_str());
-
+  
   h1_m_tgt ->SetLineColor(kBlue);
   h1_m_tgt ->SetLineWidth(2);
   h1_m_tgt->Draw();

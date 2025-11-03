@@ -76,7 +76,7 @@ int AnaDimuonLikeSign::InitRun(PHCompositeNode* topNode)
   int LBbot = sq_run->get_v1495_id(3);
   int ret = m_rs.LoadConfig(LBtop, LBbot);
   if (ret != 0) {
-    cout << "!!WARNING!!  OnlMonTrigEP::InitRunOnlMon():  roadset.LoadConfig returned " << ret << ".\n";
+    cout << "!!WARNING!!  AnaDimuonLikeSign::InitRun():  roadset.LoadConfig returned " << ret << ".\n";
   }
   cout <<"Roadset " << m_rs.str(1) << endl;
 
@@ -133,10 +133,12 @@ int AnaDimuonLikeSign::process_event(PHCompositeNode* topNode)
 
     int road_pos = trk_pos->getTriggerRoad();
     int road_neg = trk_neg->getTriggerRoad();
-    bool pos_top = m_rs.PosTop()->FindRoad(road_pos);
-    bool pos_bot = m_rs.PosBot()->FindRoad(road_pos);
-    bool neg_top = m_rs.NegTop()->FindRoad(road_neg);
-    bool neg_bot = m_rs.NegBot()->FindRoad(road_neg);
+    UtilTrigger::TrigRoads* roads_top = (m_label == "PP"  ?  m_rs.PosTop()  :  m_rs.NegTop());
+    UtilTrigger::TrigRoads* roads_bot = (m_label == "PP"  ?  m_rs.PosBot()  :  m_rs.NegBot());
+    bool pos_top = roads_top->FindRoad(road_pos);
+    bool pos_bot = roads_bot->FindRoad(road_pos);
+    bool neg_top = roads_top->FindRoad(road_neg);
+    bool neg_bot = roads_bot->FindRoad(road_neg);
     //cout << "T " << road_pos << " " << road_neg << " " << pos_top << pos_bot << neg_top << neg_bot << endl;
 
     DimuonData dd;
@@ -202,13 +204,9 @@ void AnaDimuonLikeSign::AnalyzeTree(TChain* tree, const std::string label)
   TH1* h1_D3m = new TH1D("h1_D3m", ";D3m occupancy;N of events", 300, -0.5, 299.5);
   
   TH1* h1_nhit_pos = new TH1D("h1_nhit_pos", "#mu^{+};N of hits/track;", 6, 12.5, 18.5);
-  TH1* h1_chi2_pos = new TH1D("h1_chi2_pos", "#mu^{+};Track #chi^{2};", 100, 0, 2);
+  TH1* h1_chi2_pos = new TH1D("h1_chi2_pos", "#mu^{+};Track #chi^{2};", 100, 0, 10);
   TH1* h1_z_pos    = new TH1D("h1_z_pos"   , "#mu^{+};Track z (cm);"  , 100, -700, 300);
   TH1* h1_pz_pos   = new TH1D("h1_pz_pos"  , "#mu^{+};Track p_{z} (GeV);", 100, 0, 100);
-  //TH1* h1_x_t_pos  = new TH1D("h1_x_t_pos", "#mu^{+};Track x (cm) @ Target;", 100, -50, 50);
-  //TH1* h1_y_t_pos  = new TH1D("h1_y_t_pos", "#mu^{+};Track y (cm) @ Target;", 100, -25, 25);
-  //TH1* h1_x_d_pos  = new TH1D("h1_x_d_pos", "#mu^{+};Track x (cm) @ Dump;"  , 100, -10, 10);
-  //TH1* h1_y_d_pos  = new TH1D("h1_y_d_pos", "#mu^{+};Track y (cm) @ Dump;"  , 100, -10, 10);
   
   TH1* h1_chi2_tgt_pos = new TH1D("h1_chi2_tgt_pos", "#mu^{+};Track #chi^{2} at target;"  , 100, 0, 10);
   TH1* h1_chi2_dum_pos = new TH1D("h1_chi2_dum_pos", "#mu^{+};Track #chi^{2} at dump;"    , 100, 0, 10);
@@ -217,13 +215,9 @@ void AnaDimuonLikeSign::AnalyzeTree(TChain* tree, const std::string label)
   TH1* h1_chi2_tmu_pos = new TH1D("h1_chi2_tmu_pos", "#mu^{+};#chi^{2}_{Target} - #chi^{2}_{Upstream};", 100, -10, 10);
   
   TH1* h1_nhit_neg = new TH1D("h1_nhit_neg", "#mu^{-};N of hits/track;", 6, 12.5, 18.5);
-  TH1* h1_chi2_neg = new TH1D("h1_chi2_neg", "#mu^{-};Track #chi^{2};", 100, 0, 2);
+  TH1* h1_chi2_neg = new TH1D("h1_chi2_neg", "#mu^{-};Track #chi^{2};", 100, 0, 10);
   TH1* h1_z_neg    = new TH1D("h1_z_neg"   , "#mu^{-};Track z (cm);", 100, -700, 300);
   TH1* h1_pz_neg   = new TH1D("h1_pz_neg"  , "#mu^{-};Track p_{z} (GeV);", 100, 0, 100);
-  //TH1* h1_x_t_neg  = new TH1D("h1_x_t_neg", "#mu^{-};Track x (cm) @ Target;", 100, -50, 50);
-  //TH1* h1_y_t_neg  = new TH1D("h1_y_t_neg", "#mu^{-};Track y (cm) @ Target;", 100, -25, 25);
-  //TH1* h1_x_d_neg  = new TH1D("h1_x_d_neg", "#mu^{-};Track x (cm) @ Dump;"  , 100, -10, 10);
-  //TH1* h1_y_d_neg  = new TH1D("h1_y_d_neg", "#mu^{-};Track y (cm) @ Dump;"  , 100, -10, 10);
 
   TH1* h1_chi2_tgt_neg = new TH1D("h1_chi2_tgt_neg", "#mu^{-};Track #chi^{2} at target;"  , 100, 0, 10);
   TH1* h1_chi2_dum_neg = new TH1D("h1_chi2_dum_neg", "#mu^{-};Track #chi^{2} at dump;"    , 100, 0, 10);
@@ -248,6 +242,12 @@ void AnaDimuonLikeSign::AnalyzeTree(TChain* tree, const std::string label)
   TH1* h1_dpz_tgt = new TH1D("h1_dpz_tgt", ";Dimuon p_{z} (GeV);", 100, 30, 130);
   TH1* h1_m_tgt   = new TH1D("h1_m_tgt"  , ";Dimuon mass (GeV);" , 100, 0, 10);
 
+  EventData   evt_out;
+  DimuonList  dim_list_out;
+  TTree* tree_out = new TTree("tree", "Created by AnaDimuonLikeSign");
+  tree_out->Branch("event"      , &evt_out);
+  tree_out->Branch("dimuon_list", &dim_list_out);
+  
   //GeomSvc* geom = GeomSvc::instance();
   ostringstream oss;
   
@@ -273,7 +273,9 @@ void AnaDimuonLikeSign::AnalyzeTree(TChain* tree, const std::string label)
     h1_D3p->Fill(evt->D3p);
     h1_D3m->Fill(evt->D3m);
     //if (evt->D1 > 120 || evt->D2 > 60 || evt->D3p > 50 || evt->D3m > 50) continue;
-    
+
+    evt_out = *evt;
+    dim_list_out.clear();
     for (auto it = dim_list->begin(); it != dim_list->end(); it++) {
       DimuonData* dd = &(*it);
 
@@ -285,12 +287,17 @@ void AnaDimuonLikeSign::AnalyzeTree(TChain* tree, const std::string label)
       double chi2_dum_neg = dd->chisq_dump_neg;
       double chi2_ups_neg = dd->chisq_upstream_neg;
       
-      ofs << evt->run_id << " " << evt->spill_id << " " << evt->event_id << " "
-          << evt->D1 << " " << evt->D2 << " " << evt->D3p << " " << evt->D3m << " "
-          << dd->pos.Z() << " " << dd->mom.M() << endl;
+      //ofs << evt->run_id << " " << evt->spill_id << " " << evt->event_id << " "
+      //    << evt->D1 << " " << evt->D2 << " " << evt->D3p << " " << evt->D3m << " "
+      //    << dd->pos.Z() << " " << dd->mom.M() << endl;
       //ofs << chi2_tgt_pos << " " << chi2_dum_pos << " " << chi2_ups_pos << " " << chi2_tgt_neg << " " << chi2_dum_neg << " " << chi2_ups_neg << endl;
 
+      if (dd->pos    .Z() < -690 ||
+          dd->pos_pos.Z() < -690 || dd->pos_neg.Z() < -690) continue;
+      //if (dd->mom_pos.Z() < 1    || dd->mom_neg.Z() < 1   ) continue;
       //if (dd->n_hits_pos < 14 || dd->n_hits_neg < 14) continue;
+
+      dim_list_out.push_back(*dd);
       
       h1_nhit_pos->Fill(dd->n_hits_pos);
       h1_chi2_pos->Fill(dd->chisq_pos);
@@ -302,41 +309,25 @@ void AnaDimuonLikeSign::AnalyzeTree(TChain* tree, const std::string label)
       h1_z_neg   ->Fill(dd->pos_neg.Z());
       h1_pz_neg  ->Fill(dd->mom_neg.Z());
 
-      if (dd->pos_pos.Z() < -690 || dd->pos_neg.Z() < -690) continue;
+      //if (dd->pos_pos.Z() < -690 || dd->pos_neg.Z() < -690) continue;
       //if (dd->n_hits_pos < 15 || dd->n_hits_neg < 15) continue;
       //if (fabs(trk_sep) > 200) continue;
       
-      //bool top_bot = dd->pos_top && dd->neg_bot;
-      //bool bot_top = dd->pos_bot && dd->neg_top;
-      //if (!top_bot && !bot_top) continue;
+      bool top_bot = dd->pos_top && dd->neg_bot;
+      bool bot_top = dd->pos_bot && dd->neg_top;
+      if (!top_bot && !bot_top) continue;
       
       h1_chi2_tgt_pos->Fill(chi2_tgt_pos);
       h1_chi2_dum_pos->Fill(chi2_dum_pos);
       h1_chi2_ups_pos->Fill(chi2_ups_pos);
       h1_chi2_tmd_pos->Fill(chi2_tgt_pos - chi2_dum_pos);
       h1_chi2_tmu_pos->Fill(chi2_tgt_pos - chi2_ups_pos);
-      //double x_t_pos = dd->pos_target_pos.X();
-      //double y_t_pos = dd->pos_target_pos.Y();
-      //double x_d_pos = dd->pos_dump_pos.X();
-      //double y_d_pos = dd->pos_dump_pos.Y();      
-      //h1_x_t_pos->Fill(x_t_pos);
-      //h1_y_t_pos->Fill(y_t_pos);
-      //h1_x_d_pos->Fill(x_d_pos);
-      //h1_y_d_pos->Fill(y_d_pos);
 
       h1_chi2_tgt_neg->Fill(chi2_tgt_neg);
       h1_chi2_dum_neg->Fill(chi2_dum_neg);
       h1_chi2_ups_neg->Fill(chi2_ups_neg);
       h1_chi2_tmd_neg->Fill(chi2_tgt_neg - chi2_dum_neg);
       h1_chi2_tmu_neg->Fill(chi2_tgt_neg - chi2_ups_neg);
-      //double x_t_neg = dd->pos_target_neg.X();
-      //double y_t_neg = dd->pos_target_neg.Y();
-      //double x_d_neg = dd->pos_dump_neg.X();
-      //double y_d_neg = dd->pos_dump_neg.Y();      
-      //h1_x_t_neg->Fill(x_t_neg);
-      //h1_y_t_neg->Fill(y_t_neg);
-      //h1_x_d_neg->Fill(x_d_neg);
-      //h1_y_d_neg->Fill(y_d_neg);
       
       h1_dx     ->Fill(dd->pos.X());
       h1_dy     ->Fill(dd->pos.Y());
@@ -352,12 +343,6 @@ void AnaDimuonLikeSign::AnalyzeTree(TChain* tree, const std::string label)
       if (chi2_tgt_neg < 0 || chi2_dum_neg < 0 || chi2_ups_neg < 0 ||
           chi2_tgt_neg - chi2_dum_neg > 0 || chi2_tgt_neg - chi2_ups_neg > 0) continue;
 
-      //double r_t_pos = sqrt(x_t_pos*x_t_pos + y_t_pos*y_t_pos);
-      //double r_d_pos = sqrt(x_d_pos*x_d_pos + y_d_pos*y_d_pos);
-      //double r_t_neg = sqrt(x_t_neg*x_t_neg + y_t_neg*y_t_neg);
-      //double r_d_neg = sqrt(x_d_neg*x_d_neg + y_d_neg*y_d_neg);
-      //if (r_t_pos >= r_d_pos || r_t_neg >= r_d_neg) continue;
-      
       h1_dz_sel ->Fill(dd->pos.Z());
       h1_dpz_sel->Fill(dd->mom.Z());
       h1_m_sel  ->Fill(dd->mom.M());
@@ -366,6 +351,7 @@ void AnaDimuonLikeSign::AnalyzeTree(TChain* tree, const std::string label)
       h1_dpz_tgt->Fill(dd->mom_target.Z());
       h1_m_tgt  ->Fill(dd->mom_target.M());
     }
+    tree_out->Fill();
   }
   
   TCanvas* c1 = new TCanvas("c1", "");
@@ -381,10 +367,6 @@ void AnaDimuonLikeSign::AnalyzeTree(TChain* tree, const std::string label)
   h1_chi2_pos->Draw();  c1->SaveAs((dir_out+"/h1_chi2_pos.png").c_str());
   h1_z_pos   ->Draw();  c1->SaveAs((dir_out+"/h1_z_pos.png").c_str());
   h1_pz_pos  ->Draw();  c1->SaveAs((dir_out+"/h1_pz_pos.png").c_str());
-  //h1_x_t_pos ->Draw();  c1->SaveAs(dir_out+"/h1_x_t_pos.png");  
-  //h1_y_t_pos ->Draw();  c1->SaveAs(dir_out+"/h1_y_t_pos.png");  
-  //h1_x_d_pos ->Draw();  c1->SaveAs(dir_out+"/h1_x_d_pos.png");  
-  //h1_y_d_pos ->Draw();  c1->SaveAs(dir_out+"/h1_y_d_pos.png");  
 
   h1_chi2_tgt_pos->Draw();  c1->SaveAs((dir_out+"/h1_chi2_tgt_pos.png").c_str());
   h1_chi2_dum_pos->Draw();  c1->SaveAs((dir_out+"/h1_chi2_dum_pos.png").c_str());
@@ -396,10 +378,6 @@ void AnaDimuonLikeSign::AnalyzeTree(TChain* tree, const std::string label)
   h1_chi2_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_neg.png").c_str());
   h1_z_neg   ->Draw();  c1->SaveAs((dir_out+"/h1_z_neg.png").c_str());
   h1_pz_neg  ->Draw();  c1->SaveAs((dir_out+"/h1_pz_neg.png").c_str());
-  //h1_x_t_neg ->Draw();  c1->SaveAs(dir_out+"/h1_x_t_neg.png");  
-  //h1_y_t_neg ->Draw();  c1->SaveAs(dir_out+"/h1_y_t_neg.png");  
-  //h1_x_d_neg ->Draw();  c1->SaveAs(dir_out+"/h1_x_d_neg.png");  
-  //h1_y_d_neg ->Draw();  c1->SaveAs(dir_out+"/h1_y_d_neg.png");  
 
   h1_chi2_tgt_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_tgt_neg.png").c_str());
   h1_chi2_dum_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_dum_neg.png").c_str());

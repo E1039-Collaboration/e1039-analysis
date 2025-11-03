@@ -20,6 +20,7 @@ touch timestamp.txt # All files created after this will be moved to CONDOR_DIR_O
 FN_IN=$(printf 'run_%06d_spill_%09d_spin.root' $RUN $SPILL)
 FN_OUT=$(printf 'run_%06d_spill_%09d_spin_reco.root' $RUN $SPILL)
 time root -l -b -q "Fun4All.C($RUN, $SPILL, \"$CONDOR_DIR_INPUT/$FN_IN\", \"$FN_OUT\", $N_EVT)"
+#time root -l -b -q "Fun4AllTracklet.C($RUN, $SPILL, \"$CONDOR_DIR_INPUT/$FN_IN\", \"$FN_OUT\", $N_EVT)"
 RET=$?
 if [ $RET -ne 0 ] ; then
     echo "Error in Fun4All.C: $RET"
