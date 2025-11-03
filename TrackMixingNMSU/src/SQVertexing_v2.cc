@@ -412,7 +412,7 @@ int SQVertexing_v2::InitField()
 
 		gfield = new SQGenFit::GFField(phfield);
 		genfit::FieldManager::getInstance()->init(gfield);
-		genfit::MaterialEffects::getInstance()->init(new genfit::TGeoMaterialInterface());
+		//genfit::MaterialEffects::getInstance()->init(new genfit::TGeoMaterialInterface());
 	}
 	else
 	{
@@ -427,6 +427,7 @@ int SQVertexing_v2::InitGeom()
 	{
 		std::cout << "SQVertexing_v2::InitGeom - create geom from " << geom_file_name << std::endl;
 		TGeoManager* geom = TGeoManager::Import(geom_file_name.c_str());
+                genfit::MaterialEffects::getInstance()->init(new genfit::TGeoMaterialInterface());
 		if(geom != nullptr) return Fun4AllReturnCodes::EVENT_OK;
 		else {std::cout << "geometry import failed" << std::endl;}
 	}
