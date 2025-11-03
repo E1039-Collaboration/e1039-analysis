@@ -23,7 +23,9 @@ int Fun4SimDst(const int   n_dst_ana=0,
   se->registerOutputManager(out);
   out->AddNode("SQHitVector");
   out->AddNode("SQEvent");
-  out->AddNode("SRecEvent");
+  //out->AddNode("SRecEvent");
+  out->AddNode("SQRecTrackVector");
+  out->AddNode("SQRecDimuonVector_PM");
   out->AddNode("SQMCEvent");
   out->AddNode("SQTruthTrackVector");
   out->AddNode("SQTruthDimuonVector");
@@ -47,5 +49,5 @@ int Fun4SimDst(const int   n_dst_ana=0,
 
   se->End();
   delete se;
-  return 0;
+  exit(0); // return 0;
 }

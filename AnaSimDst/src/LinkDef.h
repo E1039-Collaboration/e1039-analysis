@@ -6,8 +6,12 @@
 #pragma link C++ class EventData+;
 #pragma link C++ class TrackData+;
 #pragma link C++ class DimuonData+;
+#pragma link C++ class RecoTrackData+;
+#pragma link C++ class RecoDimuonData+;
 #pragma link C++ class TrackList+;
 #pragma link C++ class DimuonList+;
+#pragma link C++ class RecoTrackList+;
+#pragma link C++ class RecoDimuonList+;
 
 #pragma link C++ class SQTrackVec+;
 #pragma link C++ class SQDimuonVec+;

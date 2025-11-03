@@ -9,10 +9,12 @@ int Fun4SimMicroDst(const char* fn_udst="uDST.root")
   se->registerInputManager(in);
   in->fileopen(fn_udst);
 
-  se->registerSubsystem(new AnaSimDst());
+  auto ana = new AnaSimDst();
+  ana->SetRoadsetID(131);
+  se->registerSubsystem(ana);
 
   se->run();
   se->End();
   delete se;
-  return 0;
+  exit(0); // return 0;
 }
