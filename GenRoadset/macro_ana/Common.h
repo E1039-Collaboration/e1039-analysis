@@ -15,7 +15,7 @@
 
 void GetParams(string& rs_id, double& mass_lo, double& mass_hi, int& inte_cut, double& frac_cut, string& list_sig, string& list_bg)
 {
-  rs_id    = "136"; // Select a roadset here to analyze.
+  rs_id    = "131"; // Select a roadset here to analyze.
   list_sig = "list_signal.txt";
   list_bg  = "list_bg.txt";
   
