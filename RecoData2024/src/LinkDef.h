@@ -12,9 +12,7 @@
 #pragma link C++ class TrackList+;
 
 #pragma link C++ class AnaTrack-!;
-#pragma link C++ class AnaDimuonSRec-!;
 #pragma link C++ class AnaDimuon-!;
-#pragma link C++ class AnaDimuonLikeSign-!;
 #pragma link C++ class AnaTriggerAndTrack-!;
 
 #pragma link C++ class UtilTrackX-!;

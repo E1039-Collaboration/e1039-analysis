@@ -34,32 +34,12 @@ struct RoadData {
 typedef std::vector<RoadData> RoadList;
 
 struct DimuonData {
-  int            road_pos;
-  int            road_neg;
   bool           pos_top;
   bool           pos_bot;
   bool           neg_top;
   bool           neg_bot;
   TVector3       pos;
   TLorentzVector mom;
-  short          n_hits_pos;
-  double         chisq_pos ;
-  double         chisq_target_pos;
-  double         chisq_dump_pos;
-  double         chisq_upstream_pos;
-  TVector3       pos_pos   ;
-  TLorentzVector mom_pos   ;
-  TVector3       pos_target_pos;
-  TVector3       pos_dump_pos;
-  short          n_hits_neg;
-  double         chisq_neg ;
-  double         chisq_target_neg;
-  double         chisq_dump_neg;
-  double         chisq_upstream_neg;
-  TVector3       pos_neg   ;
-  TLorentzVector mom_neg   ;
-  TVector3       pos_target_neg;
-  TVector3       pos_dump_neg;
   TLorentzVector mom_target; ///< Dimuon momentum with choice = 1.
   TLorentzVector mom_dump  ; ///< Dimuon momentum with choice = 2.
   

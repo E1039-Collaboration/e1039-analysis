@@ -203,33 +203,12 @@ int AnaDimuon::process_event(PHCompositeNode* topNode)
     //cout << "road_2: " << rd_2.pos_top.size() << " " << rd_2.pos_bot.size() << " " << rd_2.neg_top.size() << " " << rd_2.neg_bot.size() << endl;
     
     DimuonData dd;
-    dd.road_pos           = road_pos;
-    dd.road_neg           = road_neg;
     dd.pos_top            = pos_top;
     dd.pos_bot            = pos_bot;
     dd.neg_top            = neg_top;
     dd.neg_bot            = neg_bot;
     dd.pos                = dim->get_pos();
     dd.mom                = dim->get_mom();
-    dd.n_hits_pos         = trk_pos->get_num_hits();
-    dd.chisq_pos          = trk_pos->get_chisq();
-    dd.chisq_target_pos   = trk_pos->getChisqTarget();//get_chisq_target();
-    dd.chisq_dump_pos     = trk_pos->get_chisq_dump();
-    dd.chisq_upstream_pos = trk_pos->get_chsiq_upstream();
-    dd.pos_pos            = trk_pos->get_pos_vtx();
-    dd.mom_pos            = trk_pos->get_mom_vtx();
-    dd.pos_target_pos     = trk_pos->get_pos_target();
-    dd.pos_dump_pos       = trk_pos->get_pos_dump();
-    dd.n_hits_neg         = trk_neg->get_num_hits();
-    dd.chisq_neg          = trk_neg->get_chisq();
-    dd.chisq_target_neg   = trk_neg->getChisqTarget();//get_chisq_target();
-    dd.chisq_dump_neg     = trk_neg->get_chisq_dump();
-    dd.chisq_upstream_neg = trk_neg->get_chsiq_upstream(); // not chisq
-    dd.pos_neg            = trk_neg->get_pos_vtx();
-    dd.mom_neg            = trk_neg->get_mom_vtx();
-    dd.pos_target_neg     = trk_neg->get_pos_target();
-    dd.pos_dump_neg       = trk_neg->get_pos_dump();
-    
     //sdim.calcVariables(1); // 1 = target
     dd.mom_target = dim->p_pos_target + dim->p_neg_target; // sdim.get_mom();
     //sdim.calcVariables(2); // 2 = dump
@@ -265,12 +244,12 @@ int AnaDimuon::process_event(PHCompositeNode* topNode)
     td_neg.pos_st3        = trk_neg->get_pos_st3();
     td_neg.mom_st3        = trk_neg->get_mom_st3();
     
-    m_dim_list.push_back(dd);
+    m_dim_list    .push_back(dd);
     m_trk_pos_list.push_back(td_pos);
     m_trk_neg_list.push_back(td_neg);
-    m_road_list_0.push_back(rd_0);
-    m_road_list_1.push_back(rd_1);
-    m_road_list_2.push_back(rd_2);
+    m_road_list_0 .push_back(rd_0);
+    m_road_list_1 .push_back(rd_1);
+    m_road_list_2 .push_back(rd_2);
   }
   
   if (m_output_tree) m_tree->Fill();
@@ -349,14 +328,18 @@ void AnaDimuon::AnalyzeTree(TChain* tree, const bool road_match)
   
   EventData* evt = 0;
   DimuonList* dim_list = 0;
+  TrackList*  trk_pos_list = 0;
+  TrackList*  trk_neg_list = 0;
   RoadList* road_list_0 = 0;
   RoadList* road_list_1 = 0;
   RoadList* road_list_2 = 0;
-  tree->SetBranchAddress("event"      , &evt);
-  tree->SetBranchAddress("dimuon_list", &dim_list);
-  tree->SetBranchAddress("road_list_0", &road_list_0);
-  tree->SetBranchAddress("road_list_1", &road_list_1);
-  tree->SetBranchAddress("road_list_2", &road_list_2);
+  tree->SetBranchAddress("event"       , &evt);
+  tree->SetBranchAddress("dimuon_list" , &dim_list);
+  tree->SetBranchAddress("trk_pos_list", &trk_pos_list);
+  tree->SetBranchAddress("trk_neg_list", &trk_neg_list);
+  tree->SetBranchAddress("road_list_0" , &road_list_0);
+  tree->SetBranchAddress("road_list_1" , &road_list_1);
+  tree->SetBranchAddress("road_list_2" , &road_list_2);
 
   int fpga_bits_req = (m_mode == "PM"  ?  0x1  :  0x4);
   
@@ -378,29 +361,31 @@ void AnaDimuon::AnalyzeTree(TChain* tree, const bool road_match)
     //if (evt->D1 > 120 || evt->D2 > 60 || evt->D3p > 50 || evt->D3m > 50) continue;
     
     for (size_t idim = 0; idim < dim_list->size(); idim++) {
-      DimuonData* dd = &dim_list->at(idim);
-      //RoadData*   rd = &road_list_2->at(idim); // Use 0, 1 or 2.
+      DimuonData* dd    = &dim_list->at(idim);
+      TrackData* td_pos = &trk_pos_list->at(idim);
+      TrackData* td_neg = &trk_neg_list->at(idim);
+      RoadData*   rd = &road_list_0->at(idim); // Use 0, 1 or 2.
 
-      double trk_sep      = dd->pos_pos.Z() - dd->pos_neg.Z();
-      double chi2_tgt_pos = dd->chisq_target_pos;
-      double chi2_dum_pos = dd->chisq_dump_pos;
-      double chi2_ups_pos = dd->chisq_upstream_pos;
-      double chi2_tgt_neg = dd->chisq_target_neg;
-      double chi2_dum_neg = dd->chisq_dump_neg;
-      double chi2_ups_neg = dd->chisq_upstream_neg;
+      double trk_sep      = td_pos->pos_vtx.Z() - td_neg->pos_vtx.Z();
+      double chi2_tgt_pos = td_pos->chisq_target;
+      double chi2_dum_pos = td_pos->chisq_dump;
+      double chi2_ups_pos = td_pos->chisq_upstream;
+      double chi2_tgt_neg = td_neg->chisq_target;
+      double chi2_dum_neg = td_neg->chisq_dump;
+      double chi2_ups_neg = td_neg->chisq_upstream;
 
-      if (dd->pos    .Z() < -690 ||
-          dd->pos_pos.Z() < -690 || dd->pos_neg.Z() < -690 ||
-          dd->mom_pos.Z() <    5 || dd->mom_neg.Z() <    5   ) continue;
+      if (dd->pos        .Z() < -690 ||
+          td_pos->pos_vtx.Z() < -690 || td_neg->pos_vtx.Z() < -690 ||
+          td_pos->mom_vtx.Z() <    5 || td_neg->mom_vtx.Z() <    5   ) continue;
       //if (dd->n_hits_pos < 14 || dd->n_hits_neg < 14) continue;
       //if (dd->n_hits_pos < 15 || dd->n_hits_neg < 15) continue;
       if (fabs(trk_sep) > 200) continue;
 
       if (road_match) {
-        bool top_bot = dd->pos_top && dd->neg_bot;
-        bool bot_top = dd->pos_bot && dd->neg_top;
-        //bool top_bot = (rd->pos_top.size() > 0 && rd->neg_bot.size() > 0);
-        //bool bot_top = (rd->pos_bot.size() > 0 && rd->neg_top.size() > 0);
+        //bool top_bot = dd->pos_top && dd->neg_bot;
+        //bool bot_top = dd->pos_bot && dd->neg_top;
+        bool top_bot = (rd->pos_top.size() > 0 && rd->neg_bot.size() > 0);
+        bool bot_top = (rd->pos_bot.size() > 0 && rd->neg_top.size() > 0);
         if (!top_bot && !bot_top) continue;
       }
 
@@ -409,19 +394,19 @@ void AnaDimuon::AnalyzeTree(TChain* tree, const bool road_match)
       if (chi2_tgt_neg < 0 || chi2_dum_neg < 0 || chi2_ups_neg < 0 ||
           chi2_tgt_neg - chi2_dum_neg > 0 || chi2_tgt_neg - chi2_ups_neg > 0) continue;
 
-      h1_nhit_pos->Fill(dd->n_hits_pos);
-      h1_chi2_pos->Fill(dd->chisq_pos);
-      h1_z_pos   ->Fill(dd->pos_pos.Z());
-      h1_px_pos  ->Fill(dd->mom_pos.X());
-      h1_py_pos  ->Fill(dd->mom_pos.Y());
-      h1_pz_pos  ->Fill(dd->mom_pos.Z());
+      h1_nhit_pos->Fill(td_pos->n_hits);
+      h1_chi2_pos->Fill(td_pos->chisq);
+      h1_z_pos   ->Fill(td_pos->pos_vtx.Z());
+      h1_px_pos  ->Fill(td_pos->mom_vtx.X());
+      h1_py_pos  ->Fill(td_pos->mom_vtx.Y());
+      h1_pz_pos  ->Fill(td_pos->mom_vtx.Z());
 
-      h1_nhit_neg->Fill(dd->n_hits_neg);
-      h1_chi2_neg->Fill(dd->chisq_neg);
-      h1_z_neg   ->Fill(dd->pos_neg.Z());
-      h1_px_neg  ->Fill(dd->mom_neg.X());
-      h1_py_neg  ->Fill(dd->mom_neg.Y());
-      h1_pz_neg  ->Fill(dd->mom_neg.Z());
+      h1_nhit_neg->Fill(td_neg->n_hits);
+      h1_chi2_neg->Fill(td_neg->chisq);
+      h1_z_neg   ->Fill(td_neg->pos_vtx.Z());
+      h1_px_neg  ->Fill(td_neg->mom_vtx.X());
+      h1_py_neg  ->Fill(td_neg->mom_vtx.Y());
+      h1_pz_neg  ->Fill(td_neg->mom_vtx.Z());
       
       h1_chi2_tgt_pos->Fill(chi2_tgt_pos);
       h1_chi2_dum_pos->Fill(chi2_dum_pos);
