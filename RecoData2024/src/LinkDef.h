@@ -5,6 +5,7 @@
 
 #pragma link C++ class EventData+;
 #pragma link C++ class RoadData+;
+#pragma link C++ class RoadList+;
 #pragma link C++ class DimuonData+;
 #pragma link C++ class DimuonList+;
 #pragma link C++ class TrackData+;
@@ -15,5 +16,7 @@
 #pragma link C++ class AnaDimuon-!;
 #pragma link C++ class AnaDimuonLikeSign-!;
 #pragma link C++ class AnaTriggerAndTrack-!;
+
+#pragma link C++ class UtilTrackX-!;
 
 #endif

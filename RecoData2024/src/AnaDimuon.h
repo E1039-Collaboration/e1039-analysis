@@ -26,6 +26,11 @@ class AnaDimuon: public SubsysReco {
   TTree*      m_tree;
   EventData   m_evt;
   DimuonList  m_dim_list;
+  TrackList   m_trk_pos_list;
+  TrackList   m_trk_neg_list;
+  RoadList    m_road_list_0;
+  RoadList    m_road_list_1;
+  RoadList    m_road_list_2;
 
   UtilTrigger::TrigRoadset m_rs;
   
@@ -47,6 +52,11 @@ class AnaDimuon: public SubsysReco {
   void DisableTreeOutput() { m_output_tree = false; }
 
   void AnalyzeTree(TChain* tree, const bool road_match=true);
+
+protected:
+  void CheckRoadList(const std::vector<int>& list_road, const int road, const char* name);
+  std::vector<const UtilTrigger::TrigRoad*> FindRoads(const UtilTrigger::TrigRoads* list_road_all, const std::vector<int> list_road_id) const;
+  std::vector<int> FindRoadIDs(const UtilTrigger::TrigRoads* list_road_all, const std::vector<int> list_road_id) const;
 };
 
 #endif // _ANA_DIMUON__H_

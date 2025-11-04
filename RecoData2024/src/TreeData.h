@@ -31,6 +31,7 @@ struct RoadData {
   ClassDef(RoadData, 1);
 };
 
+typedef std::vector<RoadData> RoadList;
 
 struct DimuonData {
   int            road_pos;

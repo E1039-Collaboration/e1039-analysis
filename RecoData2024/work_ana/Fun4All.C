@@ -29,8 +29,8 @@ int Fun4All(const int run_id, const string dir_in, const string fn_list, const i
   //se->registerSubsystem(vtx);
   
   se->registerSubsystem(new AnaDimuon());
-  //se->registerSubsystem(new AnaDimuonLikeSign("AnaDimuonPP", "PP"));
-  //se->registerSubsystem(new AnaDimuonLikeSign("AnaDimuonMM", "MM"));
+  se->registerSubsystem(new AnaDimuon("AnaDimuonPP", "PP"));
+  se->registerSubsystem(new AnaDimuon("AnaDimuonMM", "MM"));
   
   //se->registerSubsystem(new AnaTrack());
   //se->registerSubsystem(new AnaTriggerAndTrack());

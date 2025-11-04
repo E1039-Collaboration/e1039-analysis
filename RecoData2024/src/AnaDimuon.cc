@@ -18,7 +18,9 @@
 #include <phool/getClass.h>
 #include <geom_svc/GeomSvc.h>
 //#include <UtilAna/UtilHist.h>
+#include <UtilAna/UtilTrigger.h>
 #include "AnaDimuon.h"
+#include "UtilTrackX.h"
 using namespace std;
 
 AnaDimuon::AnaDimuon(const std::string& name, const std::string& mode)
@@ -64,8 +66,13 @@ int AnaDimuon::InitRun(PHCompositeNode* topNode)
   m_file = new TFile(m_file_name.c_str(), "RECREATE");
   if (m_output_tree) {
     m_tree = new TTree("tree", "Created by AnaDimuon");
-    m_tree->Branch("event"      , &m_evt);
-    m_tree->Branch("dimuon_list", &m_dim_list);
+    m_tree->Branch("event"       , &m_evt);
+    m_tree->Branch("dimuon_list" , &m_dim_list);
+    m_tree->Branch("trk_pos_list", &m_trk_pos_list);
+    m_tree->Branch("trk_neg_list", &m_trk_neg_list);
+    m_tree->Branch("road_list_0" , &m_road_list_0);
+    m_tree->Branch("road_list_1" , &m_road_list_1);
+    m_tree->Branch("road_list_2" , &m_road_list_2);
   }
   
   SQRun* sq_run = findNode::getClass<SQRun>(topNode, "SQRun");
@@ -121,12 +128,19 @@ int AnaDimuon::process_event(PHCompositeNode* topNode)
   //}
   
   m_dim_list.clear();
+  m_trk_pos_list.clear();
+  m_trk_neg_list.clear();
+  m_road_list_0.clear();
+  m_road_list_1.clear();
+  m_road_list_2.clear();
   for (auto it = m_sq_dim_vec->begin(); it != m_sq_dim_vec->end(); it++) {
     SRecDimuon* dim = dynamic_cast<SRecDimuon*>(*it);
     int trk_id_pos = dim->get_track_id_pos();
     int trk_id_neg = dim->get_track_id_neg();
     SRecTrack* trk_pos = dynamic_cast<SRecTrack*>(m_sq_trk_vec->at(trk_id_pos));
     SRecTrack* trk_neg = dynamic_cast<SRecTrack*>(m_sq_trk_vec->at(trk_id_neg));
+    int road_pos = trk_pos->getTriggerRoad();
+    int road_neg = trk_neg->getTriggerRoad();
 
     UtilTrigger::TrigRoads* roads_pos_top;
     UtilTrigger::TrigRoads* roads_pos_bot;
@@ -148,14 +162,46 @@ int AnaDimuon::process_event(PHCompositeNode* topNode)
       roads_neg_top = m_rs.NegTop();
       roads_neg_bot = m_rs.NegBot();
     }
-    int road_pos = trk_pos->getTriggerRoad();
-    int road_neg = trk_neg->getTriggerRoad();
     bool pos_top = roads_pos_top->FindRoad(road_pos);
     bool pos_bot = roads_pos_bot->FindRoad(road_pos);
     bool neg_top = roads_neg_top->FindRoad(road_neg);
     bool neg_bot = roads_neg_bot->FindRoad(road_neg);
     //cout << "T " << road_pos << " " << road_neg << " " << pos_top << pos_bot << neg_top << neg_bot << endl;
 
+    RoadData rd_0;
+    RoadData rd_1;
+    RoadData rd_2;
+    
+    const double margin = 0.0; // cm
+    //UtilTrackX::verbosity = 4;
+    std::vector<int> list_road_pos_0 = UtilTrackX::FindMatchedRoads(trk_pos, margin);
+    std::vector<int> list_road_neg_0 = UtilTrackX::FindMatchedRoads(trk_neg, margin);
+    //CheckRoadList(list_road_pos, road_pos, "list_road_pos");
+    //CheckRoadList(list_road_neg, road_neg, "list_road_neg");
+    rd_0.pos_top = FindRoadIDs(roads_pos_top, list_road_pos_0);
+    rd_0.pos_bot = FindRoadIDs(roads_pos_bot, list_road_pos_0);
+    rd_0.neg_top = FindRoadIDs(roads_neg_top, list_road_neg_0);
+    rd_0.neg_bot = FindRoadIDs(roads_neg_bot, list_road_neg_0);
+
+    std::vector<int> list_road_pos_1 = UtilTrackX::FindMatchedRoads(trk_pos, 1.0);
+    std::vector<int> list_road_neg_1 = UtilTrackX::FindMatchedRoads(trk_neg, 1.0);
+    rd_1.pos_top = FindRoadIDs(roads_pos_top, list_road_pos_1);
+    rd_1.pos_bot = FindRoadIDs(roads_pos_bot, list_road_pos_1);
+    rd_1.neg_top = FindRoadIDs(roads_neg_top, list_road_neg_1);
+    rd_1.neg_bot = FindRoadIDs(roads_neg_bot, list_road_neg_1);
+
+    std::vector<int> list_road_pos_2 = UtilTrackX::FindMatchedRoads(trk_pos, 2.0);
+    std::vector<int> list_road_neg_2 = UtilTrackX::FindMatchedRoads(trk_neg, 2.0);
+    rd_2.pos_top = FindRoadIDs(roads_pos_top, list_road_pos_2);
+    rd_2.pos_bot = FindRoadIDs(roads_pos_bot, list_road_pos_2);
+    rd_2.neg_top = FindRoadIDs(roads_neg_top, list_road_neg_2);
+    rd_2.neg_bot = FindRoadIDs(roads_neg_bot, list_road_neg_2);
+
+    //cout << "road  : " << pos_top << " " << pos_bot << " " << neg_top << " " << neg_bot << " " << endl;
+    //cout << "road_0: " << rd_0.pos_top.size() << " " << rd_0.pos_bot.size() << " " << rd_0.neg_top.size() << " " << rd_0.neg_bot.size() << endl;
+    //cout << "road_1: " << rd_1.pos_top.size() << " " << rd_1.pos_bot.size() << " " << rd_1.neg_top.size() << " " << rd_1.neg_bot.size() << endl;
+    //cout << "road_2: " << rd_2.pos_top.size() << " " << rd_2.pos_bot.size() << " " << rd_2.neg_top.size() << " " << rd_2.neg_bot.size() << endl;
+    
     DimuonData dd;
     dd.road_pos           = road_pos;
     dd.road_neg           = road_neg;
@@ -188,8 +234,43 @@ int AnaDimuon::process_event(PHCompositeNode* topNode)
     dd.mom_target = dim->p_pos_target + dim->p_neg_target; // sdim.get_mom();
     //sdim.calcVariables(2); // 2 = dump
     dd.mom_dump = dim->p_pos_dump + dim->p_neg_dump; // sdim.get_mom();
+
+    TrackData td_pos;
+    td_pos.charge         = +1;
+    td_pos.road           = road_pos;
+    td_pos.n_hits         = trk_pos->get_num_hits();
+    td_pos.chisq          = trk_pos->get_chisq();
+    td_pos.chisq_target   = trk_pos->getChisqTarget();//get_chisq_target();
+    td_pos.chisq_dump     = trk_pos->get_chisq_dump();
+    td_pos.chisq_upstream = trk_pos->get_chsiq_upstream();
+    td_pos.pos_vtx        = trk_pos->get_pos_vtx();
+    td_pos.mom_vtx        = trk_pos->get_mom_vtx();
+    td_pos.pos_st1        = trk_pos->get_pos_st1();
+    td_pos.mom_st1        = trk_pos->get_mom_st1();
+    td_pos.pos_st3        = trk_pos->get_pos_st3();
+    td_pos.mom_st3        = trk_pos->get_mom_st3();
+    
+    TrackData td_neg;
+    td_neg.charge         = +1;
+    td_neg.road           = road_neg;
+    td_neg.n_hits         = trk_neg->get_num_hits();
+    td_neg.chisq          = trk_neg->get_chisq();
+    td_neg.chisq_target   = trk_neg->getChisqTarget();//get_chisq_target();
+    td_neg.chisq_dump     = trk_neg->get_chisq_dump();
+    td_neg.chisq_upstream = trk_neg->get_chsiq_upstream();
+    td_neg.pos_vtx        = trk_neg->get_pos_vtx();
+    td_neg.mom_vtx        = trk_neg->get_mom_vtx();
+    td_neg.pos_st1        = trk_neg->get_pos_st1();
+    td_neg.mom_st1        = trk_neg->get_mom_st1();
+    td_neg.pos_st3        = trk_neg->get_pos_st3();
+    td_neg.mom_st3        = trk_neg->get_mom_st3();
     
     m_dim_list.push_back(dd);
+    m_trk_pos_list.push_back(td_pos);
+    m_trk_neg_list.push_back(td_neg);
+    m_road_list_0.push_back(rd_0);
+    m_road_list_1.push_back(rd_1);
+    m_road_list_2.push_back(rd_2);
   }
   
   if (m_output_tree) m_tree->Fill();
@@ -268,8 +349,14 @@ void AnaDimuon::AnalyzeTree(TChain* tree, const bool road_match)
   
   EventData* evt = 0;
   DimuonList* dim_list = 0;
+  RoadList* road_list_0 = 0;
+  RoadList* road_list_1 = 0;
+  RoadList* road_list_2 = 0;
   tree->SetBranchAddress("event"      , &evt);
   tree->SetBranchAddress("dimuon_list", &dim_list);
+  tree->SetBranchAddress("road_list_0", &road_list_0);
+  tree->SetBranchAddress("road_list_1", &road_list_1);
+  tree->SetBranchAddress("road_list_2", &road_list_2);
 
   int fpga_bits_req = (m_mode == "PM"  ?  0x1  :  0x4);
   
@@ -290,8 +377,9 @@ void AnaDimuon::AnalyzeTree(TChain* tree, const bool road_match)
     h1_D3m->Fill(evt->D3m);
     //if (evt->D1 > 120 || evt->D2 > 60 || evt->D3p > 50 || evt->D3m > 50) continue;
     
-    for (auto it = dim_list->begin(); it != dim_list->end(); it++) {
-      DimuonData* dd = &(*it);
+    for (size_t idim = 0; idim < dim_list->size(); idim++) {
+      DimuonData* dd = &dim_list->at(idim);
+      //RoadData*   rd = &road_list_2->at(idim); // Use 0, 1 or 2.
 
       double trk_sep      = dd->pos_pos.Z() - dd->pos_neg.Z();
       double chi2_tgt_pos = dd->chisq_target_pos;
@@ -311,6 +399,8 @@ void AnaDimuon::AnalyzeTree(TChain* tree, const bool road_match)
       if (road_match) {
         bool top_bot = dd->pos_top && dd->neg_bot;
         bool bot_top = dd->pos_bot && dd->neg_top;
+        //bool top_bot = (rd->pos_top.size() > 0 && rd->neg_bot.size() > 0);
+        //bool bot_top = (rd->pos_bot.size() > 0 && rd->neg_top.size() > 0);
         if (!top_bot && !bot_top) continue;
       }
 
@@ -457,4 +547,35 @@ void AnaDimuon::AnalyzeTree(TChain* tree, const bool road_match)
   ofs.close();
   file_out->Write();
   file_out->Close();
+}
+
+void AnaDimuon::CheckRoadList(const std::vector<int>& list_road, const int road, const char* name)
+{
+  if (find(list_road.begin(), list_road.end(), road) == list_road.end()) {
+    int h1, h2, h3, h4, tb;
+    UtilTrigger::Road2Hodo(road, h1, h2, h3, h4, tb);
+    cout << "  road " << road << " (" << h1 << " " << h2 << " " << h3 << " " << h4 << ") is missed in " << name << ".\n";
+    for (auto it = list_road.begin(); it != list_road.end(); it++) {
+      UtilTrigger::Road2Hodo(*it, h1, h2, h3, h4, tb);
+      cout << "    " << *it << " (" << h1 << " " << h2 << " " << h3 << " " << h4 << ")\n";
+    }
+  }
+}
+
+std::vector<const UtilTrigger::TrigRoad*> AnaDimuon::FindRoads(const UtilTrigger::TrigRoads* list_road_all, const std::vector<int> list_road_id) const
+{
+  vector<const UtilTrigger::TrigRoad*> list_road_ret;
+  for (auto it = list_road_id.begin(); it != list_road_id.end(); it++) {
+    const UtilTrigger::TrigRoad* rd = list_road_all->FindRoad(*it);
+    if (rd) list_road_ret.push_back(rd);
+  }
+  return list_road_ret;
+}
+
+std::vector<int> AnaDimuon::FindRoadIDs(const UtilTrigger::TrigRoads* list_road_all, const std::vector<int> list_road_id) const
+{
+  vector<const UtilTrigger::TrigRoad*> list_road = FindRoads(list_road_all, list_road_id);
+  vector<int> list_road_id_ret;
+  for (auto it = list_road.begin(); it != list_road.end(); it++) list_road_id_ret.push_back((*it)->road_id);
+  return list_road_id_ret;
 }
