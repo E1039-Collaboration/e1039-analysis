@@ -15,6 +15,4 @@
 #pragma link C++ class AnaDimuon-!;
 #pragma link C++ class AnaTriggerAndTrack-!;
 
-#pragma link C++ class UtilTrackX-!;
-
 #endif

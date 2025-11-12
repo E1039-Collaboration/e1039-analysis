@@ -55,8 +55,6 @@ class AnaDimuon: public SubsysReco {
 
 protected:
   void CheckRoadList(const std::vector<int>& list_road, const int road, const char* name);
-  std::vector<const UtilTrigger::TrigRoad*> FindRoads(const UtilTrigger::TrigRoads* list_road_all, const std::vector<int> list_road_id) const;
-  std::vector<int> FindRoadIDs(const UtilTrigger::TrigRoads* list_road_all, const std::vector<int> list_road_id) const;
 };
 
 #endif // _ANA_DIMUON__H_

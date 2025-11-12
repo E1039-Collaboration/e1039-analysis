@@ -19,8 +19,8 @@
 #include <geom_svc/GeomSvc.h>
 //#include <UtilAna/UtilHist.h>
 #include <UtilAna/UtilTrigger.h>
+#include <UtilAna/UtilTrack.h>
 #include "AnaDimuon.h"
-#include "UtilTrackX.h"
 using namespace std;
 
 AnaDimuon::AnaDimuon(const std::string& name, const std::string& mode)
@@ -166,42 +166,36 @@ int AnaDimuon::process_event(PHCompositeNode* topNode)
     bool pos_bot = roads_pos_bot->FindRoad(road_pos);
     bool neg_top = roads_neg_top->FindRoad(road_neg);
     bool neg_bot = roads_neg_bot->FindRoad(road_neg);
-    //cout << "T " << road_pos << " " << road_neg << " " << pos_top << pos_bot << neg_top << neg_bot << endl;
 
     RoadData rd_0;
     RoadData rd_1;
     RoadData rd_2;
     
     const double margin = 0.0; // cm
-    //UtilTrackX::verbosity = 4;
-    std::vector<int> list_road_pos_0 = UtilTrackX::FindMatchedRoads(trk_pos, margin);
-    std::vector<int> list_road_neg_0 = UtilTrackX::FindMatchedRoads(trk_neg, margin);
-    //CheckRoadList(list_road_pos, road_pos, "list_road_pos");
-    //CheckRoadList(list_road_neg, road_neg, "list_road_neg");
-    rd_0.pos_top = FindRoadIDs(roads_pos_top, list_road_pos_0);
-    rd_0.pos_bot = FindRoadIDs(roads_pos_bot, list_road_pos_0);
-    rd_0.neg_top = FindRoadIDs(roads_neg_top, list_road_neg_0);
-    rd_0.neg_bot = FindRoadIDs(roads_neg_bot, list_road_neg_0);
+    UtilTrack::verbosity = 4;
+    std::vector<int> list_road_pos_0 = UtilTrack::FindMatchedRoads(trk_pos, margin);
+    std::vector<int> list_road_neg_0 = UtilTrack::FindMatchedRoads(trk_neg, margin);
+    CheckRoadList(list_road_pos_0, road_pos, "list_road_pos");
+    CheckRoadList(list_road_neg_0, road_neg, "list_road_neg");
+    rd_0.pos_top = roads_pos_top->FindRoadIDs(list_road_pos_0);
+    rd_0.pos_bot = roads_pos_bot->FindRoadIDs(list_road_pos_0);
+    rd_0.neg_top = roads_neg_top->FindRoadIDs(list_road_neg_0);
+    rd_0.neg_bot = roads_neg_bot->FindRoadIDs(list_road_neg_0);
 
-    std::vector<int> list_road_pos_1 = UtilTrackX::FindMatchedRoads(trk_pos, 1.0);
-    std::vector<int> list_road_neg_1 = UtilTrackX::FindMatchedRoads(trk_neg, 1.0);
-    rd_1.pos_top = FindRoadIDs(roads_pos_top, list_road_pos_1);
-    rd_1.pos_bot = FindRoadIDs(roads_pos_bot, list_road_pos_1);
-    rd_1.neg_top = FindRoadIDs(roads_neg_top, list_road_neg_1);
-    rd_1.neg_bot = FindRoadIDs(roads_neg_bot, list_road_neg_1);
+    std::vector<int> list_road_pos_1 = UtilTrack::FindMatchedRoads(trk_pos, 1.0);
+    std::vector<int> list_road_neg_1 = UtilTrack::FindMatchedRoads(trk_neg, 1.0);
+    rd_1.pos_top = roads_pos_top->FindRoadIDs(list_road_pos_1);
+    rd_1.pos_bot = roads_pos_bot->FindRoadIDs(list_road_pos_1);
+    rd_1.neg_top = roads_neg_top->FindRoadIDs(list_road_neg_1);
+    rd_1.neg_bot = roads_neg_bot->FindRoadIDs(list_road_neg_1);
 
-    std::vector<int> list_road_pos_2 = UtilTrackX::FindMatchedRoads(trk_pos, 2.0);
-    std::vector<int> list_road_neg_2 = UtilTrackX::FindMatchedRoads(trk_neg, 2.0);
-    rd_2.pos_top = FindRoadIDs(roads_pos_top, list_road_pos_2);
-    rd_2.pos_bot = FindRoadIDs(roads_pos_bot, list_road_pos_2);
-    rd_2.neg_top = FindRoadIDs(roads_neg_top, list_road_neg_2);
-    rd_2.neg_bot = FindRoadIDs(roads_neg_bot, list_road_neg_2);
+    std::vector<int> list_road_pos_2 = UtilTrack::FindMatchedRoads(trk_pos, 2.0);
+    std::vector<int> list_road_neg_2 = UtilTrack::FindMatchedRoads(trk_neg, 2.0);
+    rd_2.pos_top = roads_pos_top->FindRoadIDs(list_road_pos_2);
+    rd_2.pos_bot = roads_pos_bot->FindRoadIDs(list_road_pos_2);
+    rd_2.neg_top = roads_neg_top->FindRoadIDs(list_road_neg_2);
+    rd_2.neg_bot = roads_neg_bot->FindRoadIDs(list_road_neg_2);
 
-    //cout << "road  : " << pos_top << " " << pos_bot << " " << neg_top << " " << neg_bot << " " << endl;
-    //cout << "road_0: " << rd_0.pos_top.size() << " " << rd_0.pos_bot.size() << " " << rd_0.neg_top.size() << " " << rd_0.neg_bot.size() << endl;
-    //cout << "road_1: " << rd_1.pos_top.size() << " " << rd_1.pos_bot.size() << " " << rd_1.neg_top.size() << " " << rd_1.neg_bot.size() << endl;
-    //cout << "road_2: " << rd_2.pos_top.size() << " " << rd_2.pos_bot.size() << " " << rd_2.neg_top.size() << " " << rd_2.neg_bot.size() << endl;
-    
     DimuonData dd;
     dd.pos_top            = pos_top;
     dd.pos_bot            = pos_bot;
@@ -543,28 +537,10 @@ void AnaDimuon::CheckRoadList(const std::vector<int>& list_road, const int road,
   if (find(list_road.begin(), list_road.end(), road) == list_road.end()) {
     int h1, h2, h3, h4, tb;
     UtilTrigger::Road2Hodo(road, h1, h2, h3, h4, tb);
-    cout << "  road " << road << " (" << h1 << " " << h2 << " " << h3 << " " << h4 << ") is missed in " << name << ".\n";
+    cout << "  run " << m_sq_evt->get_run_id() << " event " << m_sq_evt->get_event_id() << ": road " << road << " (" << h1 << " " << h2 << " " << h3 << " " << h4 << ") is missed in " << name << ".\n";
     for (auto it = list_road.begin(); it != list_road.end(); it++) {
       UtilTrigger::Road2Hodo(*it, h1, h2, h3, h4, tb);
       cout << "    " << *it << " (" << h1 << " " << h2 << " " << h3 << " " << h4 << ")\n";
     }
   }
-}
-
-std::vector<const UtilTrigger::TrigRoad*> AnaDimuon::FindRoads(const UtilTrigger::TrigRoads* list_road_all, const std::vector<int> list_road_id) const
-{
-  vector<const UtilTrigger::TrigRoad*> list_road_ret;
-  for (auto it = list_road_id.begin(); it != list_road_id.end(); it++) {
-    const UtilTrigger::TrigRoad* rd = list_road_all->FindRoad(*it);
-    if (rd) list_road_ret.push_back(rd);
-  }
-  return list_road_ret;
-}
-
-std::vector<int> AnaDimuon::FindRoadIDs(const UtilTrigger::TrigRoads* list_road_all, const std::vector<int> list_road_id) const
-{
-  vector<const UtilTrigger::TrigRoad*> list_road = FindRoads(list_road_all, list_road_id);
-  vector<int> list_road_id_ret;
-  for (auto it = list_road.begin(); it != list_road.end(); it++) list_road_id_ret.push_back((*it)->road_id);
-  return list_road_id_ret;
 }
