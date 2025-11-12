@@ -364,7 +364,7 @@ void AnaDimuon::AnalyzeTree(TChain* tree, const bool road_match)
       DimuonData* dd    = &dim_list->at(idim);
       TrackData* td_pos = &trk_pos_list->at(idim);
       TrackData* td_neg = &trk_neg_list->at(idim);
-      RoadData*   rd = &road_list_0->at(idim); // Use 0, 1 or 2.
+      RoadData*      rd = &road_list_0->at(idim); // Use 0, 1 or 2.
 
       double trk_sep      = td_pos->pos_vtx.Z() - td_neg->pos_vtx.Z();
       double chi2_tgt_pos = td_pos->chisq_target;
@@ -373,7 +373,6 @@ void AnaDimuon::AnalyzeTree(TChain* tree, const bool road_match)
       double chi2_tgt_neg = td_neg->chisq_target;
       double chi2_dum_neg = td_neg->chisq_dump;
       double chi2_ups_neg = td_neg->chisq_upstream;
-
       if (dd->pos        .Z() < -690 ||
           td_pos->pos_vtx.Z() < -690 || td_neg->pos_vtx.Z() < -690 ||
           td_pos->mom_vtx.Z() <    5 || td_neg->mom_vtx.Z() <    5   ) continue;
@@ -381,12 +380,17 @@ void AnaDimuon::AnalyzeTree(TChain* tree, const bool road_match)
       //if (dd->n_hits_pos < 15 || dd->n_hits_neg < 15) continue;
       if (fabs(trk_sep) > 200) continue;
 
+      double y_st1_pos = td_pos->pos_st1.Y();
+      double y_st1_neg = td_neg->pos_st1.Y();
+      if (fabs(y_st1_pos) < 3 || fabs(y_st1_neg) < 3) continue;
+      
       if (road_match) {
         //bool top_bot = dd->pos_top && dd->neg_bot;
         //bool bot_top = dd->pos_bot && dd->neg_top;
         bool top_bot = (rd->pos_top.size() > 0 && rd->neg_bot.size() > 0);
         bool bot_top = (rd->pos_bot.size() > 0 && rd->neg_top.size() > 0);
         if (!top_bot && !bot_top) continue;
+        //if (top_bot || bot_top) continue; // anti-matching
       }
 
       if (chi2_tgt_pos < 0 || chi2_dum_pos < 0 || chi2_ups_pos < 0 ||
