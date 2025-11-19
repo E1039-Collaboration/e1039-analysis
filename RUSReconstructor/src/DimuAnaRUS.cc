@@ -58,7 +58,6 @@ int DimuAnaRUS::Init(PHCompositeNode* startNode)
 int DimuAnaRUS::InitRun(PHCompositeNode* startNode)
 {
 
-    cout << "debug 1: "<<endl;
 	m_file = new TFile(m_file_name.c_str(), "RECREATE");
 
 	if (!m_file || m_file->IsZombie()) {
@@ -76,7 +75,6 @@ int DimuAnaRUS::InitRun(PHCompositeNode* startNode)
 		std::cout << "Tree " << m_tree->GetName() << " created successfully." << std::endl;
 	}
 
-    cout << "debug 2: "<<endl;
 	m_tree->Branch("eventID", &eventID, "eventID/I");
 	m_tree->Branch("runID", &runID, "runID/I");
 	m_tree->Branch("spillID", &spillID, "spillID/I");
