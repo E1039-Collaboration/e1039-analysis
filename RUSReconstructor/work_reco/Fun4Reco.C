@@ -60,7 +60,6 @@ int Fun4Reco(const int nevent = 10)
     // --- Input Manager ---
     Fun4AllRUSInputManager* in = new Fun4AllRUSInputManager("VectIn");
     in->set_tree_name("tree");
-    //in->fileopen("MC_BKG_Tuned.root");
     in->fileopen("/seaquest/users/mhossain/DimuAnaRUS/mc_gen/RUS_out.root");
     se->registerInputManager(in);
     
