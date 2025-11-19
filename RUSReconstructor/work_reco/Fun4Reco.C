@@ -48,26 +48,33 @@ int Fun4Reco(const int nevent = 10)
     SQVertexing* vtx = new SQVertexing();
     se->registerSubsystem(vtx);
 
+    /*
+
+    Fun4AllInputManager *in = new Fun4AllDstInputManager("SimMicroDst");
+    se->registerInputManager(in);
+    const char* fn_udst="/seaquest/users/mhossain/DimuAnaRUS/mc_gen/data/MC_JPsi_Pythia8_Target_Sep26/100/out/DST.root";
+    in->fileopen(fn_udst);
+    */
+
+    
     // --- Input Manager ---
     Fun4AllRUSInputManager* in = new Fun4AllRUSInputManager("VectIn");
     in->set_tree_name("tree");
-    in->set_mc(is_mc);
-    in->fileopen("RUS_in.root");
+    //in->fileopen("MC_BKG_Tuned.root");
+    in->fileopen("/seaquest/users/mhossain/DimuAnaRUS/mc_gen/RUS_out.root");
     se->registerInputManager(in);
+    
 
 
     // DST output manager
     //Fun4AllDstOutputManager *out = new Fun4AllDstOutputManager("DSTOUT", "DST.root");
     //se->registerOutputManager(out);
 
-    /*
     // --- Output Manager ---
     Fun4AllRUSOutputManager* tree = new Fun4AllRUSOutputManager();
     tree->SetTreeName("tree");
-    tree->SetFileName("RUS_out.root");
-    tree->SetMCTrueMode(is_mc);  // keep consistent with input
+    tree->SetFileName("RUS_out2.root");
     se->registerOutputManager(tree);
-    */
 
     // --- Dimuon analysis ---
     DimuAnaRUS* dimuAna = new DimuAnaRUS();
