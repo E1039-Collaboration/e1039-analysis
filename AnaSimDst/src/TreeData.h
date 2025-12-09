@@ -19,6 +19,18 @@ struct EventData {
   ClassDef(EventData, 1);
 };
 
+struct RoadData {
+  std::vector<int> pos_top;
+  std::vector<int> pos_bot;
+  std::vector<int> neg_top;
+  std::vector<int> neg_bot;
+
+  RoadData();
+  virtual ~RoadData() {;}
+  ClassDef(RoadData, 1);
+};
+typedef std::vector<RoadData> RoadList;
+
 struct TrackData {
   int            charge;
   TVector3       pos_vtx;

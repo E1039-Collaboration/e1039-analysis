@@ -15,6 +15,11 @@ EventData::EventData()
   }
 }
 
+RoadData::RoadData()
+{
+  ;
+}
+
 TrackData::TrackData() 
   : charge(0)
 {
