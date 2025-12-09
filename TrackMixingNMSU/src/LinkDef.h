@@ -6,7 +6,6 @@
 // Analysis classes
 //   Defined in Ana*.(h|cc)
 #pragma link C++ class AnaSortMixVertex-!;
-#pragma link C++ class SQVertexing_v2-!;
 
 // Data classes
 //   Defined in TreeData.(h|cc) & Ana*.(h|cc)

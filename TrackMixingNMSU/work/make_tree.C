@@ -63,8 +63,10 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
   
   unsigned int n_run = list_run.size();
   for (unsigned int i_run = 0; i_run < n_run; i_run++) {
+    //if (i_run == 1) break; // for debug
     run_id = list_run[i_run];
     ostringstream oss;	
+    //oss << "scratch_1107/run_" << setfill('0') << setw(6) << run_id << "/out/output.root";
     oss << "scratch/run_" << setfill('0') << setw(6) << run_id << "/out/output.root";
     const string fn_in = oss.str();
     std::cout << "Input [" << i_run << "/" << n_run << "] " << fn_in << std::endl;
@@ -166,6 +168,46 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
   exit(0);
 }
 
+bool SelectDimuon(SRecDimuon* dim, SRecTrack* trk_pos, SRecTrack* trk_neg)
+{
+  //int road_pos = trk_pos->getTriggerRoad();
+  //int road_neg = trk_neg->getTriggerRoad();
+  //bool pos_top = rs.PosTop()->FindRoad(road_pos);
+  //bool pos_bot = rs.PosBot()->FindRoad(road_pos);
+  //bool neg_top = rs.NegTop()->FindRoad(road_neg);
+  //bool neg_bot = rs.NegBot()->FindRoad(road_neg);
+  //if (!(pos_top && neg_bot) && !(pos_bot && neg_top)) return false;
+  
+  double z_vtx = dim->get_pos().Z();
+  double z_pos = trk_pos->get_pos_vtx().Z();
+  double z_neg = trk_neg->get_pos_vtx().Z();
+  if (z_vtx < -690 || z_pos < -690 || z_neg < -690) return false;
+  if (fabs(z_pos-z_neg)>200) return false;
+
+  double pz_pos = trk_pos->get_mom_vtx().Z();
+  double pz_neg = trk_neg->get_mom_vtx().Z();
+  if (pz_pos < 5 || pz_neg < 5) return false;
+  
+  if (fabs(trk_pos->get_pos_st1().Y()) < 3 ||
+      fabs(trk_neg->get_pos_st1().Y()) < 3   ) return false;
+
+  double pos_chisq_t  = trk_pos->getChisqTarget();
+  double pos_chisq_d  = trk_pos->getChisqDump();
+  double pos_chisq_us = trk_pos->get_chsiq_upstream();
+  double neg_chisq_t  = trk_neg->getChisqTarget();
+  double neg_chisq_d  = trk_neg->getChisqDump();
+  double neg_chisq_us = trk_neg->get_chsiq_upstream();
+  if (pos_chisq_t < 0 || pos_chisq_d < 0 || pos_chisq_us < 0 ||
+      neg_chisq_t < 0 || neg_chisq_d < 0 || neg_chisq_us < 0   ) return false;
+  if (pos_chisq_d - pos_chisq_t < 0 || pos_chisq_us - pos_chisq_t < 0 ||
+      neg_chisq_d - neg_chisq_t < 0 || neg_chisq_us - neg_chisq_t < 0   ) return false;
+
+  //if (trk_pos->get_mom_st1().Y() * trk_neg->get_mom_st1().Y() > 0) return false;
+  //if (trk_pos->get_pos_st1().X() > 25 || trk_neg->get_pos_st1().X() > 25) return false;
+
+  return true;
+}
+
 /**
  * Dimuon selection being used by Liliet, confirmed on 2025-08-18.
  *   z_track > -600 cm
@@ -177,7 +219,7 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
  *   x1_st1_pos < 25 cm
  *   x1_st1_neg < 25 cm
  */
-bool SelectDimuon(SRecDimuon* dim, SRecTrack* trk_pos, SRecTrack* trk_neg)
+bool SelectDimuonV1(SRecDimuon* dim, SRecTrack* trk_pos, SRecTrack* trk_neg)
 {
   //int road_pos = trk_pos->getTriggerRoad();
   //int road_neg = trk_neg->getTriggerRoad();

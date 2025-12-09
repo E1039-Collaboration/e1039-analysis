@@ -14,6 +14,7 @@ class TTree;
 class SRecTrack;
 class SQEvent;
 class SQHitVector;
+class SQVertexing;
 
 /*struct SRecDimuonData {
   int            trk_id_pos;
@@ -60,6 +61,7 @@ class AnaSortMixVertex
 	std::ofstream m_ofs;
 	TFile* m_file_out;
 
+        SQVertexing* m_vtxfit;
 	//bool dumpfit;
 	//int m_target_id;
 
@@ -137,7 +139,6 @@ class AnaSortMixVertex
 	SRecEvent* recEvent_target_like;
 	SRecEvent* recEvent_dump_like;
 	SRecEvent* recEvent_upstream_like;
-	SQGenFit::GFField* gfield_v2;
 
 	int plus_fpga1, plus_occuD1, plus_occuD2, plus_occuD3p, plus_occuD3m, plus_TargetPos; 
 	float plus_rfp00c, plus_pot_p00, plus_liveP;

@@ -10,13 +10,13 @@
 #include <geom_svc/GeomSvc.h>
 #include <ktracker/SRawEvent.h>
 #include <ktracker/SRecEvent.h>
+#include <ktracker/SQVertexing.h>
 #include <interface_main/SQTrackVector.h>
 #include <GenFit/FieldManager.h>
 #include <phfield/PHFieldConfig.h>
 #include <phfield/PHFieldConfig_v3.h>
 #include <phfield/PHFieldUtility.h>
 #include "AnaSortMixVertex.h"
-#include "SQVertexing_v2.h"
 #include <UtilAna/UtilDimuon.h>
 #include "UtilBeam.h"
 #include "TreeData.h"
@@ -57,7 +57,7 @@ void AnaSortMixVertex::Init(const int run_id)
   rc->set_IntFlag("RUNNUMBER", run_id);
   rc->set_DoubleFlag("FMAGSTR", -1.044);
   rc->set_DoubleFlag("KMAGSTR", -1.025);
-  rc->set_DoubleFlag("X_BEAM", -0.2); 
+  //rc->set_DoubleFlag("X_BEAM", -0.2); 
   rc->set_BoolFlag("COARSE_MODE", false);
   rc->set_BoolFlag("REQUIRE_MUID", false);
   rc->set_CharFlag("HIT_MASK_MODE", "X");
@@ -80,7 +80,13 @@ void AnaSortMixVertex::Init(const int run_id)
   //setting up the output directory
   if (m_dir_out != ".") gSystem->mkdir(m_dir_out.c_str(), true);
   m_ofs.open((m_dir_out + "/output.txt").c_str());
-  m_file_out = new TFile((m_dir_out + "/output.root").c_str(), "RECREATE"); 
+  m_file_out = new TFile((m_dir_out + "/output.root").c_str(), "RECREATE");
+
+  m_vtxfit = new SQVertexing();
+  m_vtxfit->set_geom_file_name((string)gSystem->Getenv("E1039_RESOURCE") + "/geometry/geom_run005433.root");
+  m_vtxfit->set_legacy_rec_container(true);
+  m_vtxfit->Init();
+  m_vtxfit->InitRun();
 }
 
 void AnaSortMixVertex::Analyze(const int run_id, const std::vector<std::string> list_in)
@@ -534,16 +540,6 @@ void AnaSortMixVertex::DoVertex(TTree* input_tree, const int run_id, bool mix_fl
 
 	}
 
-	//VertexFit* vtxfit = new VertexFit();
-	SQVertexing_v2* vtxfit = new SQVertexing_v2();
-	vtxfit->set_geom_file_name((string)gSystem->Getenv("E1039_RESOURCE") + "/geometry/geom_run005433.root");
-	vtxfit->set_legacy_rec_container(true);
-	gfield_v2 = nullptr;
-	vtxfit->InitVar();
-	//vtxfit->Verbosity(99);
-	vtxfit->InitField(); 
-	vtxfit->InitGeom();
-
 	SRecDimuon recDimuon;
 
 	std::vector<SRecTrack> * pos_tracks_input = 0;
@@ -724,7 +720,7 @@ void AnaSortMixVertex::DoVertex(TTree* input_tree, const int run_id, bool mix_fl
 				SRecTrack* track2 = &neg_tracks_hold.at(k);
 				if(!track1->isKalmanFitted() || !track2->isKalmanFitted()) continue;
 
-				if(vtxfit->processOneDimuon(track1, track2, recDimuon)){
+				if(m_vtxfit->processOneDimuon(track1, track2, recDimuon)){
 					if (track1->getStateVector(0).GetNcols()==0) std::cout<<"track1 Ncols ==0 "<<std::endl;
 					if (track2->getStateVector(0).GetNcols()==0) std::cout<<"track2 Ncols ==0 "<<std::endl;
 					
