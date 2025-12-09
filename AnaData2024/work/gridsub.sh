@@ -52,7 +52,7 @@ fi
 cd $DIR_MACRO
 mkdir -p $DIR_WORK
 rm -f    $DIR_WORK/input.tar.gz
-tar czf  $DIR_WORK/input.tar.gz  $FN_LIST *.C ../setup.sh ../inst
+tar czf  $DIR_WORK/input.tar.gz  $FN_LIST *.C *.txt* ../setup.sh ../inst
 
 for (( JOB_I = $JOB_B; JOB_I <= $JOB_E; JOB_I++ )) ; do
     RUN=${LIST_RUN[((JOB_I - 1))]}

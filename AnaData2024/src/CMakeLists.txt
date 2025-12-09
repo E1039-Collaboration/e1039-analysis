@@ -31,7 +31,7 @@ execute_process(COMMAND root-config --libs   OUTPUT_VARIABLE ROOT_LINK    OUTPUT
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall ${ROOT_CFLAGS}")
 
 add_library(AnaData2024 SHARED ${sources} AnaData2024_Dict.cc)
-target_link_libraries(AnaData2024  fun4all interface_main geom_svc UtilAna)
+target_link_libraries(AnaData2024  fun4all interface_main geom_svc db_svc UtilAna)
 install(TARGETS AnaData2024 DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 install(FILES ${dist_headers} DESTINATION ${CMAKE_INSTALL_PREFIX}/include)

@@ -15,9 +15,13 @@ int Fun4All(const int run_id, const string dir_in, const string fn_list, const i
   //se->Verbosity(1);
 
   se->registerSubsystem(new CalibDriftDist());
-  
-    //se->registerSubsystem(new AnaHodoHit());
-  se->registerSubsystem(new AnaChamHit());
+
+  auto ana = new AnaBeam();
+  ana->SetSpillListName("list_run_spill.txt");
+  se->registerSubsystem(ana);
+
+  //se->registerSubsystem(new AnaHodoHit());
+  //se->registerSubsystem(new AnaChamHit());
   //se->registerSubsystem(new AnaTriggerHit());
   //se->registerSubsystem(new AnaTrigSignal());
   //se->registerSubsystem(new AnaHardEvent());

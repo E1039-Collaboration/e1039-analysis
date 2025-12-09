@@ -33,4 +33,27 @@ struct HitData {
 
 typedef std::vector<HitData> HitList;
 
+struct BeamData {
+  int   run_id;
+  int   spill_id;
+  int   event_id;
+  short fpga_bits;
+  short nim_bits;
+  int   turn_id;
+  int   rf_id;
+  int   rfp01;
+  int   rfp00;
+  int   rfm01;
+  short d1;
+  short d2;
+  short d3p;
+  short d3m;
+
+  BeamData();
+  virtual ~BeamData() {;}
+
+  ClassDef(BeamData, 1);
+};
+
+
 #endif // _TREE_DATA__H_
