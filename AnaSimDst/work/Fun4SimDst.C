@@ -23,11 +23,13 @@ int Fun4SimDst(const int   n_dst_ana=0,
   se->registerOutputManager(out);
   out->AddNode("SQHitVector");
   out->AddNode("SQEvent");
-  out->AddNode("SRecEvent");
+  //out->AddNode("SRecEvent");
   out->AddNode("SQMCEvent");
   out->AddNode("SQTruthTrackVector");
   out->AddNode("SQTruthDimuonVector");
-
+  out->AddNode("SQRecTrackVector");
+  out->AddNode("SQRecDimuonVector_PM");
+  
   vector<string> list_dst;
   string fn_dst;
   ifstream ifs(fn_list_dst);

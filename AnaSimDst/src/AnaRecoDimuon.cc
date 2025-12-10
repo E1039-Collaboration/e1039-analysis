@@ -113,8 +113,6 @@ int AnaRecoDimuon::process_event(PHCompositeNode* topNode)
     rd.neg_bot = roads_neg_bot->FindRoadIDs(list_road_neg_0);
 
     RecoDimuonData ddr;
-    ddr.road_pos   = road_pos;
-    ddr.road_neg   = road_neg;
     ddr.pos_top    = pos_top;
     ddr.pos_bot    = pos_bot;
     ddr.neg_top    = neg_top;
@@ -125,6 +123,7 @@ int AnaRecoDimuon::process_event(PHCompositeNode* topNode)
     ddr.mom_dump   = dim->p_pos_dump   + dim->p_neg_dump;
 
     ddr.trk_pos.charge         = trk_pos->get_charge();
+    ddr.trk_pos.road           = road_pos;
     ddr.trk_pos.n_hits         = trk_pos->get_num_hits();
     ddr.trk_pos.chisq          = trk_pos->get_chisq();
     ddr.trk_pos.chisq_target   = trk_pos->get_chisq_target();
@@ -140,6 +139,7 @@ int AnaRecoDimuon::process_event(PHCompositeNode* topNode)
     ddr.trk_pos.pos_dump       = trk_pos->get_pos_dump();
     
     ddr.trk_neg.charge         = trk_neg->get_charge();
+    ddr.trk_neg.road           = road_neg;
     ddr.trk_neg.n_hits         = trk_neg->get_num_hits();
     ddr.trk_neg.chisq          = trk_neg->get_chisq();
     ddr.trk_neg.chisq_target   = trk_neg->get_chisq_target();
