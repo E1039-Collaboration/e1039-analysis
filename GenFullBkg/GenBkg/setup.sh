@@ -2,9 +2,9 @@ DIR_TOP=$(dirname $(readlink -f $BASH_SOURCE))
 DIR_BUILD=$DIR_TOP/build
 DIR_INST=$DIR_TOP/anamodule-inst
 
-#source /e906/app/software/osg/software/e1039/this-e1039.sh
-source /seaquest/users/apun/pullR_prep/core-inst/this-e1039.sh
-#source /e906/app/software/osg/users/$USER/e1039/core/this-e1039.sh
+source /exp/seaquest/app/software/osg/software/e1039/this-e1039.sh
+#source /seaquest/users/apun/pullR_prep/core-inst/this-e1039.sh
+#source /exp/seaquest/app/software/osg/users/$USER/e1039/core/this-e1039.sh
 export LD_LIBRARY_PATH=$DIR_INST/lib:$LD_LIBRARY_PATH
 
 function cmake-this {
