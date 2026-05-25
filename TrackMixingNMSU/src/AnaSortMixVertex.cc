@@ -51,32 +51,7 @@ AnaSortMixVertex::~AnaSortMixVertex()
  * Init() of each analysis module should call this function and then initialize its own variables.
  */
 void AnaSortMixVertex::Init(const int run_id)
-{
-  //initializing the reco constants used during original reconstruction	
-  recoConsts* rc = recoConsts::instance();
-  rc->set_IntFlag("RUNNUMBER", run_id);
-  rc->set_DoubleFlag("FMAGSTR", -1.044);
-  rc->set_DoubleFlag("KMAGSTR", -1.025);
-  //rc->set_DoubleFlag("X_BEAM", -0.2); 
-  rc->set_BoolFlag("COARSE_MODE", false);
-  rc->set_BoolFlag("REQUIRE_MUID", false);
-  rc->set_CharFlag("HIT_MASK_MODE", "X");
-  
-  rc->set_CharFlag("AlignmentMille", "$E1039_RESOURCE/alignment/run0/align_mille_v10_a.txt");
-  rc->set_CharFlag("AlignmentHodo", "");
-  rc->set_CharFlag("AlignmentProp", "");
-  rc->set_CharFlag("Calibration", "");
-  rc->set_IntFlag ("MaxHitsDC0" , 350);
-  rc->set_IntFlag ("MaxHitsDC1" , 350);
-  rc->set_IntFlag ("MaxHitsDC2" , 170);
-  rc->set_IntFlag ("MaxHitsDC3p", 140);
-  rc->set_IntFlag ("MaxHitsDC3m", 140);
-  rc->set_DoubleFlag("RejectWinDC0" , 0.3);
-  rc->set_DoubleFlag("RejectWinDC1" , 0.5);
-  rc->set_DoubleFlag("RejectWinDC2" , 0.35);
-  rc->set_DoubleFlag("RejectWinDC3p", 0.24);
-  rc->set_DoubleFlag("RejectWinDC3m", 0.24);
-  
+{  
   //setting up the output directory
   if (m_dir_out != ".") gSystem->mkdir(m_dir_out.c_str(), true);
   m_ofs.open((m_dir_out + "/output.txt").c_str());

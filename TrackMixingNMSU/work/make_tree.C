@@ -1,9 +1,14 @@
+#include <UtilAna/UtilTrack.h>
+#include <UtilAna/UtilTrigger.h>
+#include <UtilAna/TrigRoadset.h>
 R__LOAD_LIBRARY(TrackMixingNMSU)
+R__LOAD_LIBRARY(UtilAna)
 using namespace std;
 
 UtilTrigger::TrigRoadset rs;
 
 bool SelectDimuon(SRecDimuon* dim, SRecTrack* trk_pos, SRecTrack* trk_neg);
+bool SelectDimuonV1(SRecDimuon* dim, SRecTrack* trk_pos, SRecTrack* trk_neg);
 int GetSpin(const int run_id);
 
 void make_tree(const string list_run_spill="list_run_spill.txt")
@@ -22,6 +27,10 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
   list_run.erase(unique(list_run.begin(), list_run.end()), list_run.end());
 
   rs.LoadConfig(131); // Roadset ID.
+
+  recoConsts *rc = recoConsts::instance();
+  rc->init(5433);
+  rc->set_CharFlag("GeomPlane", "20260050501"); // Only for a test
   
   TFile* f_out = new TFile("tree.root", "RECREATE");
   int run_id;
@@ -74,7 +83,9 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
     TFile* f_file = new TFile(fn_in.c_str());
     if(!f_file->IsOpen()){
       cout << "Cannot get the DST tree.  Abort." << endl;
-      exit(1);
+      //exit(1);
+      delete f_file;
+      continue;
     }
     TTree* _sorted = (TTree*) f_file->Get("save_sorted");
     TTree* _mixed  = (TTree*) f_file->Get("save_mix");	
@@ -170,6 +181,15 @@ void make_tree(const string list_run_spill="list_run_spill.txt")
 
 bool SelectDimuon(SRecDimuon* dim, SRecTrack* trk_pos, SRecTrack* trk_neg)
 {
+  std::vector<int> list_road_pos = UtilTrack::FindMatchedRoads(trk_pos);
+  std::vector<int> list_road_neg = UtilTrack::FindMatchedRoads(trk_neg);
+  vector<int> list_road_pt = rs.PosTop()->FindRoadIDs(list_road_pos);
+  vector<int> list_road_pb = rs.PosBot()->FindRoadIDs(list_road_pos);
+  vector<int> list_road_nt = rs.NegTop()->FindRoadIDs(list_road_neg);
+  vector<int> list_road_nb = rs.NegBot()->FindRoadIDs(list_road_neg);
+  if (!(list_road_pt.size()>0 && list_road_nb.size()>0) &&
+      !(list_road_pb.size()>0 && list_road_nt.size()>0)) return false;
+  
   //int road_pos = trk_pos->getTriggerRoad();
   //int road_neg = trk_neg->getTriggerRoad();
   //bool pos_top = rs.PosTop()->FindRoad(road_pos);

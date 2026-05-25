@@ -2,8 +2,8 @@
 DIR_MACRO=$(dirname $(readlink -f $BASH_SOURCE))
 #DIR_DST=/pnfs/e1039/scratch/users/harshaka/RecoData2024/reco
 #DIR_DST=/pnfs/e1039/persistent/users/kenichi/RecoData2024/reco-202503
-DIR_DST=/pnfs/e1039/persistent/users/kenichi/RecoData2024/reco-20250804
-#DIR_DST=/pnfs/e1039/scratch/users/kenichi/RecoData2024/reco-empty
+#DIR_DST=/pnfs/e1039/persistent/users/kenichi/RecoData2024/reco-20250804
+DIR_DST=/pnfs/e1039/persistent/users/kenichi/RecoData2024/reco-20260512
 
 ##
 ## Functions

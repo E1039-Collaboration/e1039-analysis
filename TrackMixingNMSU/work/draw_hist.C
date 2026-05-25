@@ -103,6 +103,10 @@ void draw_hist()
   tr_mix = (TTree*)file->Get("tree_mix");
 
   gSystem->mkdir("result", true);
+  ofstream ofs("result/result.txt");
+  ofs << "tr_org " << tr_org->GetEntries() << "\n"
+      << "tr_mix " << tr_mix->GetEntries() << "\n";
+  ofs.close();
   
   DrawHistObj();
   Draw2D();
