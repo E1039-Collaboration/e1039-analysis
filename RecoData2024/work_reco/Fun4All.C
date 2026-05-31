@@ -4,15 +4,19 @@ R__LOAD_LIBRARY(RecoData2024)
 
 int Fun4All(const int run_id, const int spill_id, const string DST_in, const string DST_out, const int n_evt=0)
 {
+  bool kmag_on = ! (6061 <= run_id && run_id <= 6068);
+
   recoConsts* rc = recoConsts::instance();
   rc->set_IntFlag("RUNNUMBER", run_id);
   rc->set_DoubleFlag("FMAGSTR", -1.044);
   rc->set_DoubleFlag("KMAGSTR", -1.025);
+  //rc->set_DoubleFlag("X_BEAM", -0.2);
+  rc->set_BoolFlag("KMAG_ON", kmag_on);
   rc->set_BoolFlag("COARSE_MODE", false);
   rc->set_BoolFlag("REQUIRE_MUID", false);
   rc->set_CharFlag("HIT_MASK_MODE", "X");
-    
-  rc->set_CharFlag("AlignmentMille", "config/align_mille_v10_a.txt");
+
+  rc->set_CharFlag("AlignmentMille", "$E1039_RESOURCE/alignment/run0/align_mille_v10_a.txt");
   rc->set_CharFlag("AlignmentHodo", "");
   rc->set_CharFlag("AlignmentProp", "");
   rc->set_CharFlag("Calibration", "");
@@ -26,6 +30,8 @@ int Fun4All(const int run_id, const int spill_id, const string DST_in, const str
   rc->set_DoubleFlag("RejectWinDC2" , 0.35);
   rc->set_DoubleFlag("RejectWinDC3p", 0.24);
   rc->set_DoubleFlag("RejectWinDC3m", 0.24);
+
+  rc->set_CharFlag("GeomPlane", "2026050501"); // Only for a test
   
   Fun4AllServer* se = Fun4AllServer::instance();
   se->setRun(run_id);
@@ -35,14 +41,14 @@ int Fun4All(const int run_id, const int spill_id, const string DST_in, const str
   cal_ele_pos->CalibTriggerHit(false);
   se->registerSubsystem(cal_ele_pos);
   
-  //CalibHodoInTime* cal_hodo = new CalibHodoInTime();
-  //cal_hodo->SkipCalibration();
-  //cal_hodo->DeleteOutTimeHit();
-  //se->registerSubsystem(cal_hodo);
+  CalibHodoInTime* cal_hodo = new CalibHodoInTime();
+  cal_hodo->SkipCalibration();
+  cal_hodo->DeleteOutTimeHit();
+  se->registerSubsystem(cal_hodo);
   
   CalibDriftDist* cal_dd = new CalibDriftDist();
   //cal_dd->Verbosity(999);
-  //cal_dd->DeleteOutTimeHit();
+  cal_dd->DeleteOutTimeHit();
   se->registerSubsystem(cal_dd);
 
   SQReco* reco = new SQReco();
@@ -53,25 +59,29 @@ int Fun4All(const int run_id, const int spill_id, const string DST_in, const str
   reco->setInputTy(SQReco::E1039);
   reco->setFitterTy(SQReco::KFREF);
   reco->set_evt_reducer_opt("none"); // "ahs"
-  reco->set_enable_eval_dst(true);
-  for (int ii = 0; ii <= 3; ii++) reco->add_eval_list(ii);
-  reco->set_enable_eval(true);
-  reco->set_eval_file_name("eval.root");
+  //reco->set_enable_eval_dst(true);
+  //for (int ii = 0; ii <= 3; ii++) reco->add_eval_list(ii);
+  //reco->set_enable_eval(true);
+  //reco->set_eval_file_name("eval.root");
   se->registerSubsystem(reco);
 
-  SQVertexing* vtx = new SQVertexing();
-  //vtx->Verbosity(99);
-  //vtx->set_legacy_rec_container(true); // default = false
-  //vtx->set_single_retracking(true);
-  se->registerSubsystem(vtx);
-
-  se->registerSubsystem(new SQVertexing("vtx_pm", +1, +1));
-  se->registerSubsystem(new SQVertexing("vtx_mm", -1, -1));
-  
-  se->registerSubsystem(new AnaDimuon());
-  se->registerSubsystem(new AnaDimuonLikeSign("AnaDimuonPP", "PP"));
-  se->registerSubsystem(new AnaDimuonLikeSign("AnaDimuonMM", "MM"));
-
+  if (kmag_on) {
+    SQVertexing* vtx = new SQVertexing();
+    //vtx->Verbosity(99);
+    //vtx->set_legacy_rec_container(true); // default = false
+    //vtx->set_single_retracking(true);
+    se->registerSubsystem(vtx);
+    
+    se->registerSubsystem(new SQVertexing("vtx_pp", +1, +1));
+    se->registerSubsystem(new SQVertexing("vtx_mm", -1, -1));
+    
+    se->registerSubsystem(new AnaDimuon());
+    se->registerSubsystem(new AnaDimuonLikeSign("AnaDimuonPP", "PP"));
+    se->registerSubsystem(new AnaDimuonLikeSign("AnaDimuonMM", "MM"));
+  } else {
+    se->registerSubsystem(new AnaTrack());
+  }
+    
   Fun4AllInputManager* in = new Fun4AllDstInputManager("DSTIN");
   se->registerInputManager(in);
   in->fileopen(DST_in);

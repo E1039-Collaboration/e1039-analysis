@@ -167,8 +167,8 @@ void AnaTrack::AnalyzeTree(TChain* tree)
 
     //if (! (evt->fpga_bits & 0x1)) continue;
     //if (! (evt->fpga_bits & 0x4)) continue;
-    if (! (evt->fpga_bits & 0x8)) continue;
-    //if (! (evt->nim_bits & 0x4)) continue;
+    //if (! (evt->fpga_bits & 0x8)) continue;
+    if (! (evt->nim_bits & 0x2)) continue;
     
     for (auto it = trk_list->begin(); it != trk_list->end(); it++) {
       TrackData* td = &(*it);
