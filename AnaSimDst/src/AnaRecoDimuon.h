@@ -1,5 +1,6 @@
 #ifndef _ANA_RECO_DIMUON__H_
 #define _ANA_RECO_DIMUON__H_
+#include <fstream>
 #include <fun4all/SubsysReco.h>
 #include <UtilAna/TrigRoadset.h>
 #include "TreeData.h"
@@ -23,11 +24,15 @@ class AnaRecoDimuon: public SubsysReco {
   TFile*      m_file;
   TTree*      m_tree;
   EventData   m_evt;
-  RoadList    m_road_list;
+  RoadData    m_road_emu; //< Fired roads emulated with hodo hits
+  RoadList    m_road_list; //< Expected fired roads based on track trajectory
+  RoadList    m_road_list_all; //< All roads, including not-enabled roads, matched to track trajectory
   RecoDimuonList m_dim_list;
-  //TrackList   m_trk_pos_list;
-  //TrackList   m_trk_neg_list;
 
+  std::ofstream m_ofs;
+  unsigned int n_evt_all;
+  unsigned int n_evt_ok;
+  
   UtilTrigger::TrigRoadset m_rs;
   
  public:
@@ -47,8 +52,7 @@ class AnaRecoDimuon: public SubsysReco {
   void AnalyzeTree(TTree* tree, const bool road_match=true);
 
 protected:
-  void CheckRoadList(const std::vector<int>& list_road, const int road, const char* name);
-  void FindFiredRoads(const SQHitVector* vec, std::vector<int>& list_road_top, std::vector<int>& list_road_bot, const bool in_time=true);
+  void CheckRoadList(const std::vector<int>& list_road, const int road, const char* name, std::ostream& os=std::cout);
 };
 
 #endif // _ANA_RECO_DIMUON__H_

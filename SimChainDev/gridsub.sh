@@ -43,9 +43,12 @@ for (( id=1; id<=$njobs; id++ )) ; do
     RET_SUB=${PIPESTATUS[0]}
     test $RET_SUB -ne 0 && exit $RET_SUB
   else
+    export  CONDOR_DIR_INPUT=$work/$id/input
+    export CONDOR_DIR_OUTPUT=$work/$id/out
     mkdir -p $work/$id/input
     cp -p $work/input.tar.gz $work/$id/input
-    cd $work/$id
+    mkdir -p $work/$id/exe
+    cd $work/$id/exe
     $work/$id/gridrun.sh $nevents $id |& tee $work/$id/log_gridrun.txt
   fi
 done

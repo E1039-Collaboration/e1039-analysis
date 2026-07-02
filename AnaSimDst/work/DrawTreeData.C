@@ -1,8 +1,7 @@
-/// Fun4SimTree.C:  Macro to analyze the simulated tree created by Fun4SimMicroDst.C.
+/// DrawTreeData.C: An example macro to draw variables using TTree::Draw().
+#include "Common.h"
 R__LOAD_LIBRARY(libana_sim_dst)
-
 using namespace std;
-const char* TYPE_GMC = "D-Y E906Gen"; // D-Y, J/#psi, E906Gen, PYTHIA, etc.
 TFile* file;
 TTree* tree;
 TCanvas* c1;
@@ -13,10 +12,8 @@ void DrawDimTrkTrueKin();
 void DrawTrkTrueKin();
 void DrawTrueVar(const string varname, const string title_x, const int n_x, const double x_lo, const double x_hi);
 void FitCosTheta();
-void AnaEvents();
-double GetInteLumi(const char* fn_lumi="lumi_tot.txt");
 
-void Fun4SimTree(const char* fname="sim_tree.root", const char* tname="tree")
+void DrawTreeData(const char* fname="sim_tree.root", const char* tname="tree")
 {
   file = new TFile(fname);
   tree = (TTree*)file->Get(tname);
@@ -37,7 +34,6 @@ void Fun4SimTree(const char* fname="sim_tree.root", const char* tname="tree")
   //DrawDimTrkTrueKin();
   DrawTrkTrueKin();
   //FitCosTheta();
-  //AnaEvents();
 
   exit(0);
 }
@@ -102,9 +98,7 @@ void DrawDimTrkTrueKin()
   tree->Project("h1_all", "(dim_true.mom_pos.Z() - dim_true.mom_neg.Z())/(dim_true.mom_pos.Z() + dim_true.mom_neg.Z())", "weight");
   tree->Project("h1_rec", "(dim_true.mom_pos.Z() - dim_true.mom_neg.Z())/(dim_true.mom_pos.Z() + dim_true.mom_neg.Z())", "weight * (rec_stat==0)");
 
-  ostringstream oss;
-  oss << TYPE_GMC << " GMC;gpz+gpz (GeV) of tracks;N of tracks";
-  hs = new THStack("hs", oss.str().c_str());
+  hs = new THStack("hs", "GMC;gpz+gpz (GeV) of tracks;N of tracks");
   hs->Add(h1_all);
   hs->Add(h1_rec);
   h1_rec->SetLineColor(kRed);
@@ -126,9 +120,7 @@ void DrawTrkTrueKin()
   tree->Project("h1_all", "trk_true.charge", "weight");
   tree->Project("h1_rec", "trk_true.charge", "weight * (rec_stat==0)");
 
-  ostringstream oss;
-  oss << TYPE_GMC << " GMC;True charge of single tracks;N of tracks";
-  hs = new THStack("hs", oss.str().c_str());
+  hs = new THStack("hs", "GMC;True charge of single tracks;N of tracks");
   hs->Add(h1_all);
   hs->Add(h1_rec);
   h1_rec->SetLineColor(kRed);
@@ -143,15 +135,13 @@ void DrawTrueVar(const string varname, const string title_x, const int n_x, cons
   tree->Project("h1_all", varname.c_str(), "weight");
   tree->Project("h1_rec", varname.c_str(), "weight * (rec_stat==0)");
 
-  ostringstream oss;
-  oss << TYPE_GMC << " GMC;" << title_x << ";Yield";
-  THStack hs("hs", oss.str().c_str());
+  THStack hs("hs", Form("GMC;%s;Yield", title_x.c_str()));
   hs.Add(h1_all);
   hs.Add(h1_rec);
   h1_rec->SetLineColor(kRed);
   hs.Draw("nostack");
 
-  oss.str("");
+  ostringstream oss;
   oss << "result/h1_";
   for (string::const_iterator it = varname.begin(); it != varname.end(); it++) {
     switch (*it) { // modify bad chars for file name
@@ -177,37 +167,10 @@ void FitCosTheta()
   f1->SetParameters(h1_costh->Integral()/h1_costh->GetNbinsX(), 1.0);
   h1_costh->Fit(f1, "REM");
 
-  ostringstream oss;
-  oss << TYPE_GMC << " GMC;True cos#theta;Yield";
-  h1_costh->SetTitle(oss.str().c_str());
+  h1_costh->SetTitle("GMC;True cos#theta;Yield");
   c1->SaveAs("result/h1_costh_fit.png");
   delete f1;
   delete h1_costh;
-}
-
-void AnaEvents()
-{
-  typedef map<int, int> IntCount_t;
-  IntCount_t id_cnt;
-  DimuonList* list_dim = new DimuonList();
-  tree->SetBranchAddress("dim_true", &list_dim);
-
-  int n_ent = tree->GetEntries();
-  cout << "AnaEvents(): n = " << n_ent << endl;
-  for (int i_ent = 0; i_ent < n_ent; i_ent++) {
-    if ((i_ent+1) % (n_ent/10) == 0) cout << "  " << 100*(i_ent+1)/n_ent << "%" << flush;
-    tree->GetEntry(i_ent);
-    for (DimuonList::iterator it = list_dim->begin(); it != list_dim->end(); it++) {
-      DimuonData* dd = &(*it);
-      int pdg_id = dd->pdg_id;
-      if (id_cnt.find(pdg_id) == id_cnt.end()) id_cnt[pdg_id] = 1;
-      else                                     id_cnt[pdg_id]++;
-    }
-  }
-  cout << endl;
-  for (IntCount_t::iterator it = id_cnt.begin(); it != id_cnt.end(); it++) {
-    cout << setw(10) << it->first << "  " << setw(10) << it->second << endl;
-  }
 }
 
 double GetInteLumi(const char* fn_lumi)

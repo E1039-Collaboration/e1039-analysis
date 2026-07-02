@@ -21,14 +21,13 @@ int Fun4SimDst(const int   n_dst_ana=0,
 
   Fun4AllDstOutputManager *out = new Fun4AllDstOutputManager("DSTOUT", fn_udst);
   se->registerOutputManager(out);
-  out->AddNode("SQHitVector");
   out->AddNode("SQEvent");
-  //out->AddNode("SRecEvent");
+  out->AddNode("SQHitVector");
   out->AddNode("SQMCEvent");
   out->AddNode("SQTruthTrackVector");
   out->AddNode("SQTruthDimuonVector");
-  out->AddNode("SQRecTrackVector");
-  out->AddNode("SQRecDimuonVector_PM");
+  out->AddNode("SQRecTrackVector"); // Or "SRecEvent"
+  out->AddNode("SQRecDimuonVector_PM"); // Or "SRecEvent"
   
   vector<string> list_dst;
   string fn_dst;
@@ -49,5 +48,5 @@ int Fun4SimDst(const int   n_dst_ana=0,
 
   se->End();
   delete se;
-  return 0;
+  exit(0);// return 0;
 }

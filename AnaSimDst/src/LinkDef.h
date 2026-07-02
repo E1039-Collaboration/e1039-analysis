@@ -21,7 +21,8 @@
 
 #pragma link C++ class FilterSimEvent-!;
 #pragma link C++ class AnaSimRunInfo-!;
-#pragma link C++ class AnaSimDst-!;
+#pragma link C++ class AnaTrueTrack-!;
+#pragma link C++ class AnaTrueDimuon-!;
 #pragma link C++ class AnaSimHit-!;
 #pragma link C++ class AnaRecoDimuon-!;
 #pragma link C++ class TraceHepMCParticle-!;

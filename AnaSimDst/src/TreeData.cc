@@ -68,6 +68,12 @@ RecoDimuonData::RecoDimuonData()
   , mom       (0,0,0,0)
   , mom_target(0,0,0,0)
   , mom_dump  (0,0,0,0)
+  , mom_pos(0,0,0,0)
+  , mom_neg(0,0,0,0)
+  , mom_pos_target(0,0,0,0)
+  , mom_neg_target(0,0,0,0)
+  , mom_pos_dump(0,0,0,0)
+  , mom_neg_dump(0,0,0,0)    
 {
   ;
 }

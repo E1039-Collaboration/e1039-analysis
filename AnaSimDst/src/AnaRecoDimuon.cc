@@ -4,6 +4,7 @@
 #include <TFile.h>
 #include <TTree.h>
 #include <TH1D.h>
+#include <TH2D.h>
 #include <TCanvas.h>
 #include <interface_main/SQRun.h>
 #include <interface_main/SQHitVector.h>
@@ -31,6 +32,8 @@ AnaRecoDimuon::AnaRecoDimuon(const std::string& name)
   , m_file_name ("output.root")
   , m_file      (0)
   , m_tree      (0)
+  , n_evt_all   (0)
+  , n_evt_ok    (0)
 {
   ;
 }
@@ -47,6 +50,7 @@ int AnaRecoDimuon::Init(PHCompositeNode* topNode)
 
 int AnaRecoDimuon::InitRun(PHCompositeNode* topNode)
 {
+  
   //GeomSvc* geom = GeomSvc::instance();
   m_sq_evt     = findNode::getClass<SQEvent       >(topNode, "SQEvent");
   m_sq_hit_vec = findNode::getClass<SQHitVector   >(topNode, "SQHitVector");
@@ -56,12 +60,14 @@ int AnaRecoDimuon::InitRun(PHCompositeNode* topNode)
 
   m_file = new TFile(m_file_name.c_str(), "RECREATE");
   m_tree = new TTree("tree", "Created by AnaRecoDimuon");
-  m_tree->Branch("event"       , &m_evt);
-  m_tree->Branch("road_list"   , &m_road_list);
-  m_tree->Branch("dimuon_list" , &m_dim_list);
-  //m_tree->Branch("trk_pos_list", &m_trk_pos_list);
-  //m_tree->Branch("trk_neg_list", &m_trk_neg_list);
+  m_tree->Branch("event"        , &m_evt);
+  m_tree->Branch("road_emu"     , &m_road_emu);
+  m_tree->Branch("road_list"    , &m_road_list);
+  m_tree->Branch("road_list_all", &m_road_list_all);
+  m_tree->Branch("dimuon_list"  , &m_dim_list);
 
+  m_ofs.open("output.txt");
+  
   if (m_rs_id != 0) {
     int ret = m_rs.LoadConfig(m_rs_id);
     if (ret != 0) {
@@ -75,13 +81,27 @@ int AnaRecoDimuon::InitRun(PHCompositeNode* topNode)
 
 int AnaRecoDimuon::process_event(PHCompositeNode* topNode)
 {
+  n_evt_all++;
   //m_evt.event_id  = m_sq_evt->get_event_id();
   m_evt.trig_bits  = m_sq_evt->get_trigger();  
+
+  std::vector<int> pos_top;
+  std::vector<int> pos_bot;
+  std::vector<int> neg_top;
+  std::vector<int> neg_bot;
+  UtilTrigger::FindFiredRoads(m_sq_hit_vec, &m_rs, true, &pos_top, &pos_bot, &neg_top, &neg_bot);
+  bool top_bot = pos_top.size() > 0 && neg_bot.size() > 0;
+  bool bot_top = pos_bot.size() > 0 && neg_top.size() > 0;
+  if (! (top_bot || bot_top)) return Fun4AllReturnCodes::ABORTEVENT; // Discard this event
+  n_evt_ok++;
+  m_road_emu.pos_top = pos_top;
+  m_road_emu.pos_bot = pos_bot;
+  m_road_emu.neg_top = neg_top;
+  m_road_emu.neg_bot = neg_bot;
   
-  m_road_list.clear();
-  m_dim_list.clear();
-  //m_trk_pos_list.clear();
-  //m_trk_neg_list.clear();
+  m_road_list    .clear();
+  m_road_list_all.clear();
+  m_dim_list     .clear();
   for (auto it = m_sq_dim_vec->begin(); it != m_sq_dim_vec->end(); it++) {
     SRecDimuon* dim = dynamic_cast<SRecDimuon*>(*it);
     int trk_id_pos = dim->get_track_id_pos();
@@ -90,7 +110,9 @@ int AnaRecoDimuon::process_event(PHCompositeNode* topNode)
     SRecTrack* trk_neg = dynamic_cast<SRecTrack*>(m_sq_trk_vec->at(trk_id_neg));
     int road_pos = trk_pos->getTriggerRoad();
     int road_neg = trk_neg->getTriggerRoad();
-
+    //if (fabs(trk_pos->get_pos_st3().Y()) < 10) continue;
+    //if (fabs(trk_neg->get_pos_st3().Y()) < 10) continue;
+    
     UtilTrigger::TrigRoads* roads_pos_top = m_rs.PosTop();
     UtilTrigger::TrigRoads* roads_pos_bot = m_rs.PosBot();
     UtilTrigger::TrigRoads* roads_neg_top = m_rs.NegTop();
@@ -101,11 +123,16 @@ int AnaRecoDimuon::process_event(PHCompositeNode* topNode)
     bool neg_bot = roads_neg_bot->FindRoad(road_neg);
     
     const double margin = 0.0; // cm
-    UtilTrack::verbosity = 4;
+    //UtilTrack::verbosity = 4;
     std::vector<int> list_road_pos_0 = UtilTrack::FindMatchedRoads(trk_pos, margin);
-    CheckRoadList(list_road_pos_0, road_pos, "list_road_pos");
+    //CheckRoadList(list_road_pos_0, road_pos, "list_road_pos");//, m_ofs);
     std::vector<int> list_road_neg_0 = UtilTrack::FindMatchedRoads(trk_neg, margin);
-    CheckRoadList(list_road_neg_0, road_neg, "list_road_neg");
+    //CheckRoadList(list_road_neg_0, road_neg, "list_road_neg");//, m_ofs);
+    RoadData rd_all;
+    rd_all.pos_top = list_road_pos_0;
+    rd_all.pos_bot = list_road_pos_0;
+    rd_all.neg_top = list_road_neg_0;
+    rd_all.neg_bot = list_road_neg_0;
     RoadData rd;
     rd.pos_top = roads_pos_top->FindRoadIDs(list_road_pos_0);
     rd.pos_bot = roads_pos_bot->FindRoadIDs(list_road_pos_0);
@@ -154,10 +181,9 @@ int AnaRecoDimuon::process_event(PHCompositeNode* topNode)
     ddr.trk_neg.pos_target     = trk_neg->get_pos_target();
     ddr.trk_neg.pos_dump       = trk_neg->get_pos_dump();
     
-    m_road_list   .push_back(rd);
-    m_dim_list    .push_back(ddr);
-    //m_trk_pos_list.push_back(td_pos);
-    //m_trk_neg_list.push_back(td_neg);
+    m_road_list    .push_back(rd);
+    m_road_list_all.push_back(rd_all);
+    m_dim_list     .push_back(ddr);
   }
   
   m_tree->Fill();
@@ -166,6 +192,11 @@ int AnaRecoDimuon::process_event(PHCompositeNode* topNode)
 
 int AnaRecoDimuon::End(PHCompositeNode* topNode)
 {
+  m_ofs << "End()\n"
+        << "  n_evt_all = " << n_evt_all << "\n"
+        << "  n_evt_ok  = " << n_evt_ok << "\n";
+  m_ofs.close();
+  
   m_file->cd();
   m_file->Write();
   m_file->Close();  
@@ -205,6 +236,11 @@ void AnaRecoDimuon::AnalyzeTree(TTree* tree, const bool road_match)
   TH1* h1_chi2_ups_neg = new TH1D("h1_chi2_ups_neg", "#mu^{-};Track #chi^{2} at upstream;", 100, 0, 10);
   TH1* h1_chi2_tmd_neg = new TH1D("h1_chi2_tmd_neg", "#mu^{-};#chi^{2}_{Target} - #chi^{2}_{Dump};"    , 100, -10, 10);
   TH1* h1_chi2_tmu_neg = new TH1D("h1_chi2_tmu_neg", "#mu^{-};#chi^{2}_{Target} - #chi^{2}_{Upstream};", 100, -10, 10);
+
+  TH2* h2_h1234t_pos = new TH2D("h2_h1234t_pos", "#mu^{+} Top   ;Paddle ID;Station ID", 25, -0.5, 24.5,  4, 0.5, 4.5);
+  TH2* h2_h1234b_pos = new TH2D("h2_h1234b_pos", "#mu^{+} Bottom;Paddle ID;Station ID", 25, -0.5, 24.5,  4, 0.5, 4.5);
+  TH2* h2_h1234t_neg = new TH2D("h2_h1234t_neg", "#mu^{-} Top   ;Paddle ID;Station ID", 25, -0.5, 24.5,  4, 0.5, 4.5);
+  TH2* h2_h1234b_neg = new TH2D("h2_h1234b_neg", "#mu^{-} Bottom;Paddle ID;Station ID", 25, -0.5, 24.5,  4, 0.5, 4.5);
   
   TH1* h1_dx  = new TH1D("h1_dx" , ";Dimuon x (cm);", 100, -1, 1);
   TH1* h1_dy  = new TH1D("h1_dy" , ";Dimuon y (cm);", 100, -1, 1);
@@ -229,15 +265,15 @@ void AnaRecoDimuon::AnalyzeTree(TTree* tree, const bool road_match)
   ostringstream oss;
   
   EventData* evt = 0;
+  RoadData* road_emu = 0;
   RoadList* road_list = 0;
+  RoadList* road_list_all = 0;
   RecoDimuonList* dim_list = 0;
-  //TrackList*  trk_pos_list = 0;
-  //TrackList*  trk_neg_list = 0;
-  tree->SetBranchAddress("event"       , &evt);
-  tree->SetBranchAddress("road_list"   , &road_list);
-  tree->SetBranchAddress("dimuon_list" , &dim_list);
-  //tree->SetBranchAddress("trk_pos_list", &trk_pos_list);
-  //tree->SetBranchAddress("trk_neg_list", &trk_neg_list);
+  tree->SetBranchAddress("event"        , &evt);
+  tree->SetBranchAddress("road_emu"     , &road_emu);
+  tree->SetBranchAddress("road_list"    , &road_list);
+  tree->SetBranchAddress("road_list_all", &road_list_all);
+  tree->SetBranchAddress("dimuon_list"  , &dim_list);
 
   int n_ent = tree->GetEntries();
   cout << "N of entries = " << n_ent << endl;
@@ -248,6 +284,7 @@ void AnaRecoDimuon::AnalyzeTree(TTree* tree, const bool road_match)
     for (size_t idim = 0; idim < dim_list->size(); idim++) {
       RecoDimuonData* dd    = &dim_list->at(idim);
       RoadData*       rd    = &road_list->at(idim);
+      RoadData*   rd_all    = &road_list_all->at(idim);
       RecoTrackData* td_pos = &dd->trk_pos;
       RecoTrackData* td_neg = &dd->trk_neg;
 
@@ -266,20 +303,84 @@ void AnaRecoDimuon::AnalyzeTree(TTree* tree, const bool road_match)
       double y_st1_pos = td_pos->pos_st1.Y();
       double y_st1_neg = td_neg->pos_st1.Y();
       if (fabs(y_st1_pos) < 3 || fabs(y_st1_neg) < 3) continue;
-      
-      if (road_match) {
-        //bool top_bot = dd->pos_top && dd->neg_bot;
-        //bool bot_top = dd->pos_bot && dd->neg_top;
-        bool top_bot = (rd->pos_top.size() > 0 && rd->neg_bot.size() > 0);
-        bool bot_top = (rd->pos_bot.size() > 0 && rd->neg_top.size() > 0);
-        if (!top_bot && !bot_top) continue;
-        //if (top_bot || bot_top) continue; // anti-matching
-      }
 
       if (chi2_tgt_pos < 0 || chi2_dum_pos < 0 || chi2_ups_pos < 0 ||
           chi2_tgt_pos - chi2_dum_pos > 0 || chi2_tgt_pos - chi2_ups_pos > 0) continue;
       if (chi2_tgt_neg < 0 || chi2_dum_neg < 0 || chi2_ups_neg < 0 ||
           chi2_tgt_neg - chi2_dum_neg > 0 || chi2_tgt_neg - chi2_ups_neg > 0) continue;
+
+      if (road_match) {
+        bool top_bot = dd->pos_top && dd->neg_bot;
+        bool bot_top = dd->pos_bot && dd->neg_top;
+        if (!top_bot && !bot_top) {
+          int h1, h2, h3, h4, tb;
+          ofs << "emu pos_top:";
+          for (auto it = road_emu->pos_top.begin(); it != road_emu->pos_top.end(); it++) {
+            UtilTrigger::Road2Hodo(*it, h1, h2, h3, h4, tb);
+            ofs << " " << (tb>0 ? '+' : '-') << h1 << ":" << h2 << ":" << h3 << ":" << h4;
+          }
+          ofs << "\n    pos_bot:";
+          for (auto it = road_emu->pos_bot.begin(); it != road_emu->pos_bot.end(); it++) {
+            UtilTrigger::Road2Hodo(*it, h1, h2, h3, h4, tb);
+            ofs << " " << (tb>0 ? '+' : '-') << h1 << ":" << h2 << ":" << h3 << ":" << h4;
+          }
+          ofs << "\n    neg_top:";
+          for (auto it = road_emu->neg_top.begin(); it != road_emu->neg_top.end(); it++) {
+            UtilTrigger::Road2Hodo(*it, h1, h2, h3, h4, tb);
+            ofs << " " << (tb>0 ? '+' : '-') << h1 << ":" << h2 << ":" << h3 << ":" << h4;
+          }
+          ofs << "\n    neg_bot:";
+          for (auto it = road_emu->neg_bot.begin(); it != road_emu->neg_bot.end(); it++) {
+            UtilTrigger::Road2Hodo(*it, h1, h2, h3, h4, tb);
+            ofs << " " << (tb>0 ? '+' : '-') << h1 << ":" << h2 << ":" << h3 << ":" << h4;
+          }
+          ofs << "\n";
+
+          //ofs << "rd  pos:" << td_pos->road << "\n"
+          //    << "    neg:" << td_neg->road << "\n\n";
+          UtilTrigger::Road2Hodo(td_pos->road, h1, h2, h3, h4, tb);
+          ofs << "rd  pos: " << (tb>0 ? '+' : '-') << h1 << ":" << h2 << ":" << h3 << ":" << h4 << "\n";
+          UtilTrigger::Road2Hodo(td_neg->road, h1, h2, h3, h4, tb);
+          ofs << "    neg: " << (tb>0 ? '+' : '-') << h1 << ":" << h2 << ":" << h3 << ":" << h4 << "\n";
+          ofs << "\n";
+          
+          continue;
+        }
+        //bool top_bot = (rd->pos_top.size() > 0 && rd->neg_bot.size() > 0);
+        //bool bot_top = (rd->pos_bot.size() > 0 && rd->neg_top.size() > 0);
+        //if (!top_bot && !bot_top) {
+        //  auto vec = &road_emu->pos_top;
+        //  ofs << "emu pos_top:";
+        //  for (auto it = vec->begin(); it != vec->end(); it++) ofs << " " << *it;
+        //  ofs << "\n    pos_bot:";
+        //  vec = &road_emu->pos_bot;
+        //  for (auto it = vec->begin(); it != vec->end(); it++) ofs << " " << *it;
+        //  ofs << "\n    neg_top:";
+        //  vec = &road_emu->neg_top;
+        //  for (auto it = vec->begin(); it != vec->end(); it++) ofs << " " << *it;
+        //  ofs << "\n    neg_bot:";
+        //  vec = &road_emu->neg_bot;
+        //  for (auto it = vec->begin(); it != vec->end(); it++) ofs << " " << *it;
+        //  ofs << "\n";
+        //
+        //  vec = &rd_all->pos_top;
+        //  ofs << "rd  pos_top:";
+        //  for (auto it = vec->begin(); it != vec->end(); it++) ofs << " " << *it;
+        //  ofs << "\n    pos_bot:";
+        //  vec = &rd_all->pos_bot;
+        //  for (auto it = vec->begin(); it != vec->end(); it++) ofs << " " << *it;
+        //  ofs << "\n    neg_top:";
+        //  vec = &rd_all->neg_top;
+        //  for (auto it = vec->begin(); it != vec->end(); it++) ofs << " " << *it;
+        //  ofs << "\n    neg_bot:";
+        //  vec = &rd_all->neg_bot;
+        //  for (auto it = vec->begin(); it != vec->end(); it++) ofs << " " << *it;
+        //  ofs << "\n\n";
+        //
+        //  continue;
+        //}
+        //if (top_bot || bot_top) continue; // anti-matching
+      }
 
       h1_nhit_pos->Fill(td_pos->n_hits);
       h1_chi2_pos->Fill(td_pos->chisq);
@@ -306,7 +407,21 @@ void AnaRecoDimuon::AnalyzeTree(TTree* tree, const bool road_match)
       h1_chi2_ups_neg->Fill(chi2_ups_neg);
       h1_chi2_tmd_neg->Fill(chi2_tgt_neg - chi2_dum_neg);
       h1_chi2_tmu_neg->Fill(chi2_tgt_neg - chi2_ups_neg);
-      
+
+      int rd_h1, rd_h2, rd_h3, rd_h4, rd_tb;
+      UtilTrigger::Road2Hodo(td_pos->road, rd_h1, rd_h2, rd_h3, rd_h4, rd_tb);
+      TH2* h2 = rd_tb > 0  ?  h2_h1234t_pos  :  h2_h1234b_pos;
+      h2->Fill(rd_h1, 1);
+      h2->Fill(rd_h2, 2);
+      h2->Fill(rd_h3, 3);
+      h2->Fill(rd_h4, 4);
+      UtilTrigger::Road2Hodo(td_neg->road, rd_h1, rd_h2, rd_h3, rd_h4, rd_tb);
+      h2 = rd_tb > 0  ?  h2_h1234t_neg  :  h2_h1234b_neg;
+      h2->Fill(rd_h1, 1);
+      h2->Fill(rd_h2, 2);
+      h2->Fill(rd_h3, 3);
+      h2->Fill(rd_h4, 4);
+
       h1_dx     ->Fill(dd->pos.X());
       h1_dy     ->Fill(dd->pos.Y());
       h1_dz     ->Fill(dd->pos.Z());
@@ -358,6 +473,35 @@ void AnaRecoDimuon::AnalyzeTree(TTree* tree, const bool road_match)
   h1_chi2_tmd_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_tmd_neg.png").c_str());
   h1_chi2_tmu_neg->Draw();  c1->SaveAs((dir_out+"/h1_chi2_tmu_neg.png").c_str());
 
+  TH1* h1;
+  h2_h1234t_pos->Draw("colz");  c1->SaveAs((dir_out+"/h2_h1234t_pos.png").c_str());
+  h1 = h2_h1234t_pos->ProjectionX("h1", 1, 1);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h1t_pos.png").c_str());  delete h1;
+  h2_h1234t_pos->GetXaxis()->SetRange(1, 18);  
+  h1 = h2_h1234t_pos->ProjectionX("h1", 2, 2);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h2t_pos.png").c_str());  delete h1;  
+  h1 = h2_h1234t_pos->ProjectionX("h1", 3, 3);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h3t_pos.png").c_str());  delete h1;  
+  h1 = h2_h1234t_pos->ProjectionX("h1", 4, 4);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h4t_pos.png").c_str());  delete h1;  
+  
+  h2_h1234b_pos->Draw("colz");  c1->SaveAs((dir_out+"/h2_h1234b_pos.png").c_str());
+  h1 = h2_h1234b_pos->ProjectionX("h1", 1, 1);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h1b_pos.png").c_str());  delete h1;
+  h2_h1234b_pos->GetXaxis()->SetRange(1, 18);  
+  h1 = h2_h1234b_pos->ProjectionX("h1", 2, 2);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h2b_pos.png").c_str());  delete h1;  
+  h1 = h2_h1234b_pos->ProjectionX("h1", 3, 3);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h3b_pos.png").c_str());  delete h1;  
+  h1 = h2_h1234b_pos->ProjectionX("h1", 4, 4);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h4b_pos.png").c_str());  delete h1;  
+  
+  h2_h1234t_neg->Draw("colz");  c1->SaveAs((dir_out+"/h2_h1234t_neg.png").c_str());
+  h1 = h2_h1234t_neg->ProjectionX("h1", 1, 1);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h1t_neg.png").c_str());  delete h1;
+  h2_h1234t_neg->GetXaxis()->SetRange(1, 18);  
+  h1 = h2_h1234t_neg->ProjectionX("h1", 2, 2);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h2t_neg.png").c_str());  delete h1;  
+  h1 = h2_h1234t_neg->ProjectionX("h1", 3, 3);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h3t_neg.png").c_str());  delete h1;  
+  h1 = h2_h1234t_neg->ProjectionX("h1", 4, 4);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h4t_neg.png").c_str());  delete h1;  
+  
+  h2_h1234b_neg->Draw("colz");  c1->SaveAs((dir_out+"/h2_h1234b_neg.png").c_str());
+  h1 = h2_h1234b_neg->ProjectionX("h1", 1, 1);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h1b_neg.png").c_str());  delete h1;
+  h2_h1234b_neg->GetXaxis()->SetRange(1, 18);  
+  h1 = h2_h1234b_neg->ProjectionX("h1", 2, 2);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h2b_neg.png").c_str());  delete h1;  
+  h1 = h2_h1234b_neg->ProjectionX("h1", 3, 3);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h3b_neg.png").c_str());  delete h1;  
+  h1 = h2_h1234b_neg->ProjectionX("h1", 4, 4);  h1->Draw();  c1->SaveAs((dir_out+"/h1_h4b_neg.png").c_str());  delete h1;  
+  
   h1_dx     ->Draw();  c1->SaveAs((dir_out+"/h1_dx.png"     ).c_str());
   h1_dy     ->Draw();  c1->SaveAs((dir_out+"/h1_dy.png"     ).c_str());
   h1_dz     ->Draw();  c1->SaveAs((dir_out+"/h1_dz.png"     ).c_str());
@@ -416,59 +560,18 @@ void AnaRecoDimuon::AnalyzeTree(TTree* tree, const bool road_match)
   file_out->Close();
 }
 
-void AnaRecoDimuon::CheckRoadList(const std::vector<int>& list_road, const int road, const char* name)
+void AnaRecoDimuon::CheckRoadList(const std::vector<int>& list_road, const int road, const char* name, std::ostream& os)
 {
   int h1, h2, h3, h4, tb;
   UtilTrigger::Road2Hodo(road, h1, h2, h3, h4, tb);
-  cout << "  " << name << ": road " << road << " (" << h1 << " " << h2 << " " << h3 << " " << h4 << ")";
+  os << "  " << name << ": road " << road << " (" << h1 << " " << h2 << " " << h3 << " " << h4 << ")";
   if (find(list_road.begin(), list_road.end(), road) != list_road.end()) {
-    cout << " Found." << endl;
+    os << " Found." << endl;
   } else {
-    cout << " Missed." << endl;
+    os << " Missed." << endl;
     for (auto it = list_road.begin(); it != list_road.end(); it++) {
       UtilTrigger::Road2Hodo(*it, h1, h2, h3, h4, tb);
-      cout << "    " << *it << " (" << h1 << " " << h2 << " " << h3 << " " << h4 << ")\n";
+      os << "    " << *it << " (" << h1 << " " << h2 << " " << h3 << " " << h4 << ")\n";
     }
   }
-}
-
-// Find a list of roads that are expected to be fired based on the given hit list.
-/**
- * This function does _not_ check if each road is in the trigger roadset.
- * The returned list contains all possible combinations of hodo hits.
- */
-void AnaRecoDimuon::FindFiredRoads(const SQHitVector* vec, std::vector<int>& list_road_top, std::vector<int>& list_road_bot, const bool in_time)
-{
-  list_road_top.clear();
-  list_road_bot.clear();
-  
-  unordered_map<int, vector<int> > list_ele_id; // det_id => vector<ele_id>
-  for (auto it = vec->begin(); it != vec->end(); it++) {
-    SQHit* hit = *it;
-    if (in_time && ! hit->is_in_time()) continue;
-    list_ele_id[hit->get_detector_id()].push_back(hit->get_element_id());
-  }
-  
-  GeomSvc* geom = GeomSvc::instance();
-  vector<int>* list_h1t = &list_ele_id[geom->getDetectorID("H1T")];
-  vector<int>* list_h2t = &list_ele_id[geom->getDetectorID("H2T")];
-  vector<int>* list_h3t = &list_ele_id[geom->getDetectorID("H3T")];
-  vector<int>* list_h4t = &list_ele_id[geom->getDetectorID("H4T")];
-  for (auto it1 = list_h1t->begin(); it1 != list_h1t->end(); it1++) {
-  for (auto it2 = list_h2t->begin(); it2 != list_h2t->end(); it2++) {
-  for (auto it3 = list_h3t->begin(); it3 != list_h3t->end(); it3++) {
-  for (auto it4 = list_h4t->begin(); it4 != list_h4t->end(); it4++) {
-    list_road_top.push_back(UtilTrigger::Hodo2Road(*it1, *it2, *it3, *it4, +1));
-  }}}}
-
-  vector<int>* list_h1b = &list_ele_id[geom->getDetectorID("H1B")];
-  vector<int>* list_h2b = &list_ele_id[geom->getDetectorID("H2B")];
-  vector<int>* list_h3b = &list_ele_id[geom->getDetectorID("H3B")];
-  vector<int>* list_h4b = &list_ele_id[geom->getDetectorID("H4B")];
-  for (auto it1 = list_h1b->begin(); it1 != list_h1b->end(); it1++) {
-  for (auto it2 = list_h2b->begin(); it2 != list_h2b->end(); it2++) {
-  for (auto it3 = list_h3b->begin(); it3 != list_h3b->end(); it3++) {
-  for (auto it4 = list_h4b->begin(); it4 != list_h4b->end(); it4++) {
-    list_road_top.push_back(UtilTrigger::Hodo2Road(*it1, *it2, *it3, *it4, -1));
-  }}}}
 }

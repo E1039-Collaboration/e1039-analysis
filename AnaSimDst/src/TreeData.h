@@ -93,9 +93,15 @@ struct RecoDimuonData {
   bool           neg_top;
   bool           neg_bot;
   TVector3       pos;
-  TLorentzVector mom;
-  TLorentzVector mom_target; ///< Dimuon momentum with choice = 1.
-  TLorentzVector mom_dump  ; ///< Dimuon momentum with choice = 2.
+  TLorentzVector mom; ///< = mom_pos + mom_neg
+  TLorentzVector mom_target; ///< = mom_pos_target + mom_neg_target
+  TLorentzVector mom_dump  ; ///< = mom_pos_dump   + mom_neg_dump
+  TLorentzVector mom_pos; ///< Positive muon momentum with choice = 0.
+  TLorentzVector mom_neg; ///< Negative muon momentum with choice = 0.
+  TLorentzVector mom_pos_target; ///< Positive muon momentum with choice = 1.
+  TLorentzVector mom_neg_target; ///< Negative muon momentum with choice = 1.
+  TLorentzVector mom_pos_dump; ///< Positive muon momentum with choice = 2.
+  TLorentzVector mom_neg_dump; ///< Negative muon momentum with choice = 2.
   RecoTrackData  trk_pos;
   RecoTrackData  trk_neg;
   
