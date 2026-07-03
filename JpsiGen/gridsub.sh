@@ -60,7 +60,7 @@ for (( JOB_I = $JOB_B; JOB_I <= $JOB_E; JOB_I++ )) ; do
     
     if [ $USE_GRID == yes ]; then
 	CMD="/exp/seaquest/app/software/script/jobsub_submit_spinquest.sh"
-	CMD+=" --expected-lifetime='medium'" # medium=8h, short=3h, long=23h
+	CMD+=" --expected-lifetime='long'" # medium=8h, short=3h, long=23h
 	CMD+=" -L $DIR_WORK_JOB/log_gridrun.txt"
 	CMD+=" -f $DIR_WORK/input.tar.gz"
 	CMD+=" -d OUTPUT $DIR_WORK_JOB/out"

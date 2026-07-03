@@ -1,7 +1,7 @@
 #ifndef _COMMON__H_
 #define _COMMON__H_
 
-double GetInteLumi(const char* fn_lumi="lumi_tot.txt");
+double GetInteLumi(const char* fn_lumi="lumi_tot.txt")
 {
   ifstream ifs(fn_lumi);
   if (!ifs.is_open()) {
